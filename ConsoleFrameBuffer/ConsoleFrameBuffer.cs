@@ -1,9 +1,7 @@
 ﻿using Microsoft.Win32.SafeHandles;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace ConsoleFrameBuffer {
 
@@ -74,23 +72,15 @@ namespace ConsoleFrameBuffer {
 
         #endregion DLL Imports
 
-        private int _x = 0;
-        private int _y = 0;
-        private int _bufferwidth = 80;
-        private int _bufferheight = 25;
+        private int _x { get; set; }
+        private int _y { get; set; }
+        private int _bufferwidth { get; set; }
+        private int _bufferheight { get; set; }
 
         private CharInfo[] _buffer;
         private SmallRect _rect;
 
-        public ConsoleFrameBuffer() {
-            _buffer = new CharInfo[_bufferwidth * _bufferheight];
-
-            _rect = new SmallRect() {
-                Left = (short)_x,
-                Top = (short)_y,
-                Right = (short)(_bufferwidth + _x),
-                Bottom = (short)(_bufferheight + _y)
-            };
+        public ConsoleFrameBuffer() : this(0, 0, 80, 25) {
         }
 
         public ConsoleFrameBuffer(int X, int Y, int Width, int Height) {
@@ -127,6 +117,9 @@ namespace ConsoleFrameBuffer {
 
                     default:
                         int j = (y + Y) * _bufferwidth + (x + X);
+
+                        if (j < 0) return;
+
                         if (j < _buffer.Length) {
                             _buffer[j].Attributes = (short)((short)ForegroundColor | (short)((short)BackgroundColor * 0x0010));
                             _buffer[j].Char.AsciiChar = (byte)Text[i];
