@@ -1,10 +1,4 @@
-﻿using ConsoleFrameBuffer;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 
 namespace ConsoleFrameBuffer.Test {
 
@@ -58,6 +52,8 @@ namespace ConsoleFrameBuffer.Test {
         }
 
         private static void Main(string[] args) {
+            Console.Title = "ConsoleFrameBuffer Test";
+
             Console.BufferWidth = _width;
             Console.BufferHeight = _height;
             Console.WindowWidth = _width;
