@@ -14,14 +14,17 @@ namespace ConsoleFrameBuffer.Test {
         private const int _width = 80;
         private const int _height = 25;
 
-        private ConsoleFrameBuffer _bufferStats = new ConsoleFrameBuffer(0, 0, _width, 1);
-        private ConsoleFrameBuffer _bufferMap = new ConsoleFrameBuffer(0, 1, _width, _height - 1);
+        private ConsoleFrameBuffer _rootBuffer = new ConsoleFrameBuffer(0, 0, _width, _height);
+        private ConsoleFrameBuffer _bufferStats = new ConsoleFrameBuffer(0, 0, _width, 3);
+        private ConsoleFrameBuffer _bufferMap = new ConsoleFrameBuffer(0, 3, _width, _height - 3);
 
         private ConsoleKeyInfo _keyPressed;
 
         private Point _player = new Point();
 
         private string[] _tileMap = new string[_width * _height];
+        private char[] _tileChars = new char[] { ',', '.', '`', '+' };
+        private Array colors = Enum.GetValues(typeof(ConsoleColor));
 
         private Random _rndNum = new Random();
         private Stopwatch _sw = new Stopwatch();
@@ -30,9 +33,7 @@ namespace ConsoleFrameBuffer.Test {
         private TimeSpan _sample;
 
         public Program() {
-            for (int i = 0; i < _width * _height; i++) {
-                _tileMap[i] = new string('.', 1);
-            }
+            ShuffleTiles();
 
             _sample = TimeSpan.FromSeconds(1);
             _value = 0;
@@ -42,6 +43,12 @@ namespace ConsoleFrameBuffer.Test {
             while (_running) {
                 Update();
                 Render();
+            }
+        }
+
+        private void ShuffleTiles() {
+            for (int i = 0; i < _width * _height; i++) {
+                _tileMap[i] = new string(_tileChars[_rndNum.Next(0, _tileChars.Length)], 1);
             }
         }
 
@@ -57,6 +64,26 @@ namespace ConsoleFrameBuffer.Test {
             if (Console.KeyAvailable) {
                 _keyPressed = Console.ReadKey(true);
 
+                if (_keyPressed.Key == ConsoleKey.UpArrow) {
+                    _rootBuffer.Y--;
+                    //_rootBuffer.SetBufferPosition(_rootBuffer.X, _rootBuffer.Y);
+                }
+
+                if (_keyPressed.Key == ConsoleKey.DownArrow) {
+                    _rootBuffer.Y++;
+                    //_rootBuffer.SetBufferPosition(_rootBufferPos.X, _rootBufferPos.Y);
+                }
+
+                if (_keyPressed.Key == ConsoleKey.LeftArrow) {
+                    _rootBuffer.X--;
+                    //_rootBuffer.SetBufferPosition(_rootBufferPos.X, _rootBufferPos.Y);
+                }
+
+                if (_keyPressed.Key == ConsoleKey.RightArrow) {
+                    _rootBuffer.X++;
+                    //_rootBuffer.SetBufferPosition(_rootBufferPos.X, _rootBufferPos.Y);
+                }
+
                 if (_keyPressed.Key == ConsoleKey.W)
                     _player.Y--;
                 if (_keyPressed.Key == ConsoleKey.D)
@@ -71,49 +98,61 @@ namespace ConsoleFrameBuffer.Test {
         }
 
         private void Render() {
+            _rootBuffer.Clear();
             _bufferStats.Clear();
             _bufferMap.Clear();
 
-            _bufferStats.Write(0, 0, String.Format("x:{0} - y:{1}", _player.X, _player.Y), ConsoleColor.White);
-            _bufferStats.Write(_width - String.Format("fps: {0}", _value).Length, 0, String.Format("fps: {0}", _value), ConsoleColor.Yellow);
+            for (int i = 0; i < _width; i++) {
+                _bufferStats.Write(i, 0, "=");
+                _bufferStats.Write(i, 2, "=");
+            }
+
+            _bufferStats.Write(0, 1, "+");
+            _bufferStats.Write(_width - 1, 1, "+");
+            _bufferStats.Write(2, 1, String.Format("x:{0} - y:{1} // rx:{2} - ry:{3}", _player.X, _player.Y, _rootBuffer.X, _rootBuffer.Y), ConsoleColor.White);
+            _bufferStats.Write(_width - String.Format("fps: {0}", (int)_value).Length - 2, 1, String.Format("fps: {0}", (int)_value), ConsoleColor.Yellow);
 
             DrawMap();
 
             _bufferMap.Write(_player.X, _player.Y, "@", ConsoleColor.Red);
 
-            _bufferStats.DrawBuffer();
-            _bufferMap.DrawBuffer();
+            ConsoleFrameBuffer.CopyBuffer(_bufferStats, _rootBuffer);
+            ConsoleFrameBuffer.CopyBuffer(_bufferMap, _rootBuffer);
+
+            _rootBuffer.DrawBuffer();
 
             _frames++;
         }
 
         private ConsoleColor color = ConsoleColor.Gray;
         private int _colortick = 0;
+        private ConsoleColor _bgcolor = ConsoleColor.Black;
+        private int _tileshuffletick = 0;
 
         private void DrawMap() {
-            if (_colortick >= 2000) {
+            if (_colortick >= 5000) {
                 color = RandomColor();
+                _bgcolor = RandomColor();
                 _colortick = 0;
             }
 
-            for (int x = 0; x < _width; x++)
+            if (_tileshuffletick >= 50) {
+                ShuffleTiles();
+                _tileshuffletick = 0;
+            }
+
+            for (int x = 0; x < _width; x++) {
                 for (int y = 0; y < _height - 1; y++) {
-                    _bufferMap.Write(x, y, _tileMap[x + _width * y], color);
+                    _bufferMap.Write(x, y, _tileMap[x + _width * y], color, _bgcolor);
                 }
+            }
 
             _colortick++;
+            _tileshuffletick++;
         }
 
         private ConsoleColor RandomColor() {
-            ConsoleColor[] color = {
-                ConsoleColor.Blue, ConsoleColor.Cyan, ConsoleColor.DarkBlue,
-                ConsoleColor.DarkCyan, ConsoleColor.DarkGray, ConsoleColor.DarkGreen,
-                ConsoleColor.DarkMagenta, ConsoleColor.DarkRed, ConsoleColor.DarkYellow,
-                ConsoleColor.Gray, ConsoleColor.Green, ConsoleColor.Magenta, ConsoleColor.Red,
-                ConsoleColor.White, ConsoleColor.Yellow
-            };
-
-            return color[_rndNum.Next(0, color.Length)];
+            return (ConsoleColor)colors.GetValue(_rndNum.Next(0, colors.Length));
         }
 
         private static void Main(string[] args) {

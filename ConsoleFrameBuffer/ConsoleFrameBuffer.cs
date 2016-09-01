@@ -72,8 +72,12 @@ namespace ConsoleFrameBuffer {
 
         #endregion DLL Imports
 
-        private int _x { get; set; }
-        private int _y { get; set; }
+        public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
+        public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
+        public int Width { get { return _bufferwidth; } }
+        public int Height { get { return _bufferheight; } }
+        protected short _x;
+        protected short _y;
         private int _bufferwidth { get; set; }
         private int _bufferheight { get; set; }
 
@@ -84,18 +88,18 @@ namespace ConsoleFrameBuffer {
         }
 
         public ConsoleFrameBuffer(int X, int Y, int Width, int Height) {
-            _x = X;
-            _y = Y;
+            this.X = X;
+            this.Y = Y;
             _bufferwidth = Width;
             _bufferheight = Height;
 
             _buffer = new CharInfo[_bufferwidth * _bufferheight];
 
             _rect = new SmallRect() {
-                Left = (short)_x,
-                Top = (short)_y,
-                Right = (short)(_bufferwidth + _x),
-                Bottom = (short)(_bufferheight + _y)
+                Left = (short)this.X,
+                Top = (short)this.Y,
+                Right = (short)(_bufferwidth + this.X),
+                Bottom = (short)(_bufferheight + this.Y)
             };
         }
 
@@ -130,15 +134,36 @@ namespace ConsoleFrameBuffer {
             }
         }
 
-        public void SetBufferPosition(int X, int Y) {
-            _x = X;
-            _y = Y;
+        public void DrawBuffer() {
+            SafeFileHandle h = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
 
+            if (!h.IsInvalid) {
+                bool b = WriteConsoleOutput(h, _buffer,
+                    new Coord() { X = (short)(_bufferwidth), Y = (short)(_bufferheight) },
+                    new Coord() { X = 0, Y = 0 },
+                    ref _rect);
+            }
+        }
+
+        public static void CopyBuffer(ConsoleFrameBuffer src, ConsoleFrameBuffer dest) {
+            for (int i = 0; i < src._buffer.Length; i++)
+                if (src._buffer[i].Char.AsciiChar > 0)
+                    dest._buffer[i + src._bufferwidth * src.Y] = src._buffer[i];
+        }
+
+        public void SetBufferPosition(int X, int Y) {
+            this.X = X;
+            this.Y = Y;
+
+            updateBufferPos();
+        }
+
+        private void updateBufferPos() {
             _rect = new SmallRect() {
-                Left = (short)_x,
-                Top = (short)_y,
-                Right = (short)(_bufferwidth + _x),
-                Bottom = (short)(_bufferheight + _y)
+                Left = (short)this.X,
+                Top = (short)this.Y,
+                Right = (short)(_bufferwidth + this.X),
+                Bottom = (short)(_bufferheight + this.Y)
             };
         }
 
@@ -151,17 +176,6 @@ namespace ConsoleFrameBuffer {
 
         public void Clear() {
             _buffer = new CharInfo[_bufferwidth * _bufferheight];
-        }
-
-        public void DrawBuffer() {
-            SafeFileHandle h = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
-
-            if (!h.IsInvalid) {
-                bool b = WriteConsoleOutput(h, _buffer,
-                    new Coord() { X = (short)(_bufferwidth), Y = (short)(_bufferheight) },
-                    new Coord() { X = 0, Y = 0 },
-                    ref _rect);
-            }
         }
     }
 }
