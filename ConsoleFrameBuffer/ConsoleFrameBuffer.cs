@@ -154,16 +154,14 @@ namespace ConsoleFrameBuffer {
         public void SetBufferPosition(int X, int Y) {
             this.X = X;
             this.Y = Y;
-
-            updateBufferPos();
         }
 
         private void updateBufferPos() {
             _rect = new SmallRect() {
-                Left = (short)this.X,
-                Top = (short)this.Y,
-                Right = (short)(_bufferwidth + this.X),
-                Bottom = (short)(_bufferheight + this.Y)
+                Left = (short)X,
+                Top = (short)Y,
+                Right = (short)(_bufferwidth + X),
+                Bottom = (short)(_bufferheight + Y)
             };
         }
 

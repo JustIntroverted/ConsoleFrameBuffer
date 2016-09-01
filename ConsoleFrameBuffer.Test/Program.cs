@@ -15,15 +15,15 @@ namespace ConsoleFrameBuffer.Test {
         private const int _height = 25;
 
         private ConsoleFrameBuffer _rootBuffer = new ConsoleFrameBuffer(0, 0, _width, _height);
-        private ConsoleFrameBuffer _bufferStats = new ConsoleFrameBuffer(0, 0, _width, 3);
-        private ConsoleFrameBuffer _bufferMap = new ConsoleFrameBuffer(0, 3, _width, _height - 3);
+        private ConsoleFrameBuffer _bufferStats = new ConsoleFrameBuffer(0, 0, _width, 5);
+        private ConsoleFrameBuffer _bufferMap = new ConsoleFrameBuffer(0, 5, _width, _height - 5);
 
         private ConsoleKeyInfo _keyPressed;
 
         private Point _player = new Point();
 
         private string[] _tileMap = new string[_width * _height];
-        private char[] _tileChars = new char[] { ',', '.', '`', '+' };
+        private char[] _tileChars = new char[] { ',', '.', '`', '+', '~' };
         private Array colors = Enum.GetValues(typeof(ConsoleColor));
 
         private Random _rndNum = new Random();
@@ -66,22 +66,18 @@ namespace ConsoleFrameBuffer.Test {
 
                 if (_keyPressed.Key == ConsoleKey.UpArrow) {
                     _rootBuffer.Y--;
-                    //_rootBuffer.SetBufferPosition(_rootBuffer.X, _rootBuffer.Y);
                 }
 
                 if (_keyPressed.Key == ConsoleKey.DownArrow) {
                     _rootBuffer.Y++;
-                    //_rootBuffer.SetBufferPosition(_rootBufferPos.X, _rootBufferPos.Y);
                 }
 
                 if (_keyPressed.Key == ConsoleKey.LeftArrow) {
                     _rootBuffer.X--;
-                    //_rootBuffer.SetBufferPosition(_rootBufferPos.X, _rootBufferPos.Y);
                 }
 
                 if (_keyPressed.Key == ConsoleKey.RightArrow) {
                     _rootBuffer.X++;
-                    //_rootBuffer.SetBufferPosition(_rootBufferPos.X, _rootBufferPos.Y);
                 }
 
                 if (_keyPressed.Key == ConsoleKey.W)
@@ -111,6 +107,9 @@ namespace ConsoleFrameBuffer.Test {
             _bufferStats.Write(_width - 1, 1, "+");
             _bufferStats.Write(2, 1, String.Format("x:{0} - y:{1} // rx:{2} - ry:{3}", _player.X, _player.Y, _rootBuffer.X, _rootBuffer.Y), ConsoleColor.White);
             _bufferStats.Write(_width - String.Format("fps: {0}", (int)_value).Length - 2, 1, String.Format("fps: {0}", (int)_value), ConsoleColor.Yellow);
+
+            string help = "Use WASD to move '@' around.  Use ARROW KEYS to move the frame around.";
+            _bufferStats.Write(_width / 2 - (help.Length / 2), 3, help, ConsoleColor.White);
 
             DrawMap();
 
