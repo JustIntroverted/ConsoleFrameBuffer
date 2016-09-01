@@ -1,15 +1,10 @@
-﻿using System;
+﻿using ConsoleFrameBuffer.Test.Mapping;
+using System;
 using System.Diagnostics;
 
 namespace ConsoleFrameBuffer.Test {
 
     internal class Program {
-
-        private struct Point {
-            public int X { get; set; }
-            public int Y { get; set; }
-        }
-
         private bool _running = true;
         private const int _width = 80;
         private const int _height = 25;
@@ -21,19 +16,24 @@ namespace ConsoleFrameBuffer.Test {
         private ConsoleKeyInfo _keyPressed;
 
         private Point _player = new Point();
+        private Camera _playerCamera = new Camera();
 
-        private string[] _tileMap = new string[_width * _height];
-        private char[] _tileChars = new char[] { ',', '.', '`', '+', '~' };
+        private CaveMap _caveMap = new CaveMap();
         private Array colors = Enum.GetValues(typeof(ConsoleColor));
 
-        private Random _rndNum = new Random();
+        public static Random RandomNumber = new Random();
         private Stopwatch _sw = new Stopwatch();
         private long _frames;
         private float _value;
         private TimeSpan _sample;
 
         public Program() {
-            ShuffleTiles();
+            _caveMap.Generate(500, 500);
+
+            _player.X = _caveMap.StartPos.X;
+            _player.Y = _caveMap.StartPos.Y;
+
+            _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height);
 
             _sample = TimeSpan.FromSeconds(1);
             _value = 0;
@@ -44,12 +44,8 @@ namespace ConsoleFrameBuffer.Test {
                 Update();
                 Render();
             }
-        }
 
-        private void ShuffleTiles() {
-            for (int i = 0; i < _width * _height; i++) {
-                _tileMap[i] = new string(_tileChars[_rndNum.Next(0, _tileChars.Length)], 1);
-            }
+            Console.Clear();
         }
 
         private void Update() {
@@ -64,21 +60,14 @@ namespace ConsoleFrameBuffer.Test {
             if (Console.KeyAvailable) {
                 _keyPressed = Console.ReadKey(true);
 
-                if (_keyPressed.Key == ConsoleKey.UpArrow) {
+                if (_keyPressed.Key == ConsoleKey.UpArrow)
                     _rootBuffer.Y--;
-                }
-
-                if (_keyPressed.Key == ConsoleKey.DownArrow) {
+                if (_keyPressed.Key == ConsoleKey.DownArrow)
                     _rootBuffer.Y++;
-                }
-
-                if (_keyPressed.Key == ConsoleKey.LeftArrow) {
+                if (_keyPressed.Key == ConsoleKey.LeftArrow)
                     _rootBuffer.X--;
-                }
-
-                if (_keyPressed.Key == ConsoleKey.RightArrow) {
+                if (_keyPressed.Key == ConsoleKey.RightArrow)
                     _rootBuffer.X++;
-                }
 
                 if (_keyPressed.Key == ConsoleKey.W)
                     _player.Y--;
@@ -89,8 +78,11 @@ namespace ConsoleFrameBuffer.Test {
                 if (_keyPressed.Key == ConsoleKey.A)
                     _player.X--;
 
-                if (_keyPressed.Key == ConsoleKey.Escape) { _running = false; }
+                if (_keyPressed.Key == ConsoleKey.Escape)
+                    _running = false;
             }
+
+            _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height);
         }
 
         private void Render() {
@@ -105,15 +97,17 @@ namespace ConsoleFrameBuffer.Test {
 
             _bufferStats.Write(0, 1, "+");
             _bufferStats.Write(_width - 1, 1, "+");
-            _bufferStats.Write(2, 1, String.Format("x:{0} - y:{1} // rx:{2} - ry:{3}", _player.X, _player.Y, _rootBuffer.X, _rootBuffer.Y), ConsoleColor.White);
-            _bufferStats.Write(_width - String.Format("fps: {0}", (int)_value).Length - 2, 1, String.Format("fps: {0}", (int)_value), ConsoleColor.Yellow);
+            _bufferStats.Write(2, 1, String.Format("x:{0} - y:{1} // rx:{2} - ry:{3}",
+                _player.X, _player.Y, _rootBuffer.X, _rootBuffer.Y), ConsoleColor.White);
+            _bufferStats.Write(_width - String.Format("fps: {0}", (int)_value).Length - 2, 1,
+                String.Format("fps: {0}", (int)_value), ConsoleColor.Yellow);
 
             string help = "Use WASD to move '@' around.  Use ARROW KEYS to move the frame around.";
             _bufferStats.Write(_width / 2 - (help.Length / 2), 3, help, ConsoleColor.White);
 
             DrawMap();
 
-            _bufferMap.Write(_player.X, _player.Y, "@", ConsoleColor.Red);
+            _bufferMap.Write(_player.X - _playerCamera.X, _player.Y - _playerCamera.Y, "@", ConsoleColor.Red);
 
             ConsoleFrameBuffer.CopyBuffer(_bufferStats, _rootBuffer);
             ConsoleFrameBuffer.CopyBuffer(_bufferMap, _rootBuffer);
@@ -135,14 +129,13 @@ namespace ConsoleFrameBuffer.Test {
                 _colortick = 0;
             }
 
-            if (_tileshuffletick >= 50) {
-                ShuffleTiles();
-                _tileshuffletick = 0;
-            }
+            for (int x = 0; x < _bufferMap.Width; x++) {
+                for (int y = 0; y < _bufferMap.Height; y++) {
+                    if (!_caveMap.IsOutOfBounds(x + _playerCamera.X, y + _playerCamera.Y)) {
+                        Tile tmpTile = _caveMap.Tiles[x + _playerCamera.X, y + _playerCamera.Y];
 
-            for (int x = 0; x < _width; x++) {
-                for (int y = 0; y < _height - 1; y++) {
-                    _bufferMap.Write(x, y, _tileMap[x + _width * y], color, _bgcolor);
+                        _bufferMap.Write(x, y, tmpTile.ID, color, tmpTile.BackgroundColor);
+                    }
                 }
             }
 
@@ -151,16 +144,16 @@ namespace ConsoleFrameBuffer.Test {
         }
 
         private ConsoleColor RandomColor() {
-            return (ConsoleColor)colors.GetValue(_rndNum.Next(0, colors.Length));
+            return (ConsoleColor)colors.GetValue(RandomNumber.Next(0, colors.Length));
         }
 
         private static void Main(string[] args) {
-            Console.Title = "ConsoleFrameBuffer Test";
+            Console.Title = "ConsoleFrameBuffer.Test";
 
-            //Console.BufferWidth = _width;
-            //Console.BufferHeight = _height;
-            //Console.WindowWidth = _width;
-            //Console.WindowHeight = _height;
+            Console.BufferWidth = _width;
+            Console.BufferHeight = _height;
+            Console.WindowWidth = _width;
+            Console.WindowHeight = _height;
 
             Console.CursorVisible = false;
 

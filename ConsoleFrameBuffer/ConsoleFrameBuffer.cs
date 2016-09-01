@@ -76,11 +76,12 @@ namespace ConsoleFrameBuffer {
         public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
         public int Width { get { return _bufferwidth; } }
         public int Height { get { return _bufferheight; } }
-        protected short _x;
-        protected short _y;
+        private short _x;
+        private short _y;
         private int _bufferwidth { get; set; }
         private int _bufferheight { get; set; }
 
+        private SafeFileHandle _h;
         private CharInfo[] _buffer;
         private SmallRect _rect;
 
@@ -88,6 +89,8 @@ namespace ConsoleFrameBuffer {
         }
 
         public ConsoleFrameBuffer(int X, int Y, int Width, int Height) {
+            _h = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+
             this.X = X;
             this.Y = Y;
             _bufferwidth = Width;
@@ -111,13 +114,14 @@ namespace ConsoleFrameBuffer {
             int x = 0, y = 0;
             for (int i = 0; i < Text.Length; ++i) {
                 switch (Text[i]) {
-                    case '\n': // newline char, move to next line, aka y=y+1
-                        y++;
-                        break;
+                    // newline
+                    case '\n': y++; break;
 
-                    case '\r': // carriage return, aka back to start of line
-                        x = 0;
-                        break;
+                    // carriage return
+                    case '\r': x = 0; break;
+
+                    // tab
+                    case '\t': x += 5; break;
 
                     default:
                         int j = (y + Y) * _bufferwidth + (x + X);
@@ -135,10 +139,8 @@ namespace ConsoleFrameBuffer {
         }
 
         public void DrawBuffer() {
-            SafeFileHandle h = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
-
-            if (!h.IsInvalid) {
-                bool b = WriteConsoleOutput(h, _buffer,
+            if (!_h.IsInvalid) {
+                bool b = WriteConsoleOutput(_h, _buffer,
                     new Coord() { X = (short)(_bufferwidth), Y = (short)(_bufferheight) },
                     new Coord() { X = 0, Y = 0 },
                     ref _rect);
