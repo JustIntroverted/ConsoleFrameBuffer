@@ -201,6 +201,8 @@ namespace ConsoleFrameBuffer {
             _bufferheight = Height;
 
             _buffer = new CharInfo[_bufferwidth * _bufferheight];
+
+            updateBufferPos();
         }
 
         /// <summary>

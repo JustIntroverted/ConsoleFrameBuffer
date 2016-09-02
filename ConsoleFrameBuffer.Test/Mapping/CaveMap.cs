@@ -37,9 +37,10 @@ namespace ConsoleFrameBuffer.Test.Mapping {
 
             StartPos = new Point(Digger.X, Digger.Y);
 
+            Console.SetCursorPosition(0, 0);
+            Console.Write("Generating cave...");
+
             while (floorCount < (Width * Height) / 50) {
-                Console.SetCursorPosition(0, 0);
-                Console.Write(floorCount);
                 int dir = Program.RandomNumber.Next(0, 4);
 
                 if (dir == 0 && !IsOutOfBounds(Digger.X, Digger.Y - 2)) {

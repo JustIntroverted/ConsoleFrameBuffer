@@ -13,8 +13,8 @@ namespace ConsoleFrameBuffer.Test {
 
     internal class Program {
         private bool _running = true;
-        private const int _width = 80;
-        private const int _height = 50;
+        private static int _width = 80;
+        private static int _height = 25;
 
         private FrameBuffer _rootBuffer = new FrameBuffer(0, 0, _width, _height);
         private FrameBuffer _bufferStats = new FrameBuffer(0, 0, _width, 5);
@@ -35,7 +35,7 @@ namespace ConsoleFrameBuffer.Test {
         private TimeSpan _sample;
 
         public Program() {
-            _caveMap.Generate(500, 100);
+            _caveMap.Generate(500, 500);
 
             _player.X = _caveMap.StartPos.X;
             _player.Y = _caveMap.StartPos.Y;
@@ -56,6 +56,20 @@ namespace ConsoleFrameBuffer.Test {
         }
 
         private void Update() {
+            // resizes frames and console settings based on console width/height
+            if (Console.WindowWidth != _width || Console.WindowHeight != _height) {
+                _width = Console.WindowWidth;
+                _height = Console.WindowHeight;
+                _rootBuffer.ResizeBuffer(_width, _height);
+                _bufferStats.ResizeBuffer(_width, 5);
+                _bufferMap.ResizeBuffer(_width, _height - 5);
+
+                Console.BufferWidth = _width;
+                Console.BufferHeight = _height;
+                Console.WindowWidth = _width;
+                Console.WindowHeight = _height;
+            }
+
             if (_sw.Elapsed > _sample) {
                 _value = (float)(_frames / _sw.Elapsed.TotalSeconds);
 
@@ -89,6 +103,8 @@ namespace ConsoleFrameBuffer.Test {
                     _caveMap.IsFloor(_player.X - 1, _player.Y))
                     _player.X--;
 
+                if (_keyPressed.Key == ConsoleKey.Tab)
+                    Console.Clear();
                 if (_keyPressed.Key == ConsoleKey.Escape)
                     _running = false;
             }
@@ -109,10 +125,10 @@ namespace ConsoleFrameBuffer.Test {
 
             _bufferStats.Write(0, 1, "+");
             _bufferStats.Write(_width - 1, 1, "+");
-            _bufferStats.Write(2, 1, String.Format("x:{0} - y:{1} // rx:{2} - ry:{3}",
-                _player.X, _player.Y, _rootBuffer.X, _rootBuffer.Y), ConsoleColor.White);
-            _bufferStats.Write(_width - String.Format("fps: {0}", (int)_value).Length - 2, 1,
-                String.Format("fps: {0}", (int)_value), ConsoleColor.Yellow);
+            _bufferStats.Write(2, 1, string.Format("x:{0} - y:{1} // rx:{2} - ry:{3} // rw:{4} - rh:{5}",
+                _player.X, _player.Y, _rootBuffer.X, _rootBuffer.Y, _rootBuffer.Width, _rootBuffer.Height), ConsoleColor.White);
+            _bufferStats.Write(_width - string.Format("fps: {0}", (int)_value).Length - 2, 1,
+                string.Format("fps: {0}", (int)_value), ConsoleColor.Yellow);
 
             string help = "Use WASD to move '@' around.  Use ARROW KEYS to move the frame around.";
             _bufferStats.Write(_width / 2 - (help.Length / 2), 3, help, ConsoleColor.White);
