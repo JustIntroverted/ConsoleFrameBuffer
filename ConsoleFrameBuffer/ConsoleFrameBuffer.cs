@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace ConsoleFrameBuffer {
 
-    public class FrameBuffer {
+    public class FrameBuffer : IDisposable {
 
         #region Structs
 
@@ -71,6 +71,8 @@ namespace ConsoleFrameBuffer {
           ref SmallRect lpWriteRegion);
 
         #endregion DLL Imports
+
+        private bool _disposed = false;
 
         public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
         public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
@@ -153,7 +155,7 @@ namespace ConsoleFrameBuffer {
         /// </summary>
         public void WriteBuffer() {
             // if the handle is valid, then go ahead and write to the console
-            if (!_h.IsInvalid) {
+            if (_h != null && !_h.IsInvalid) {
                 bool b = WriteConsoleOutput(_h, _buffer,
                     new Coord() { X = (short)(_bufferwidth), Y = (short)(_bufferheight) },
                     new Coord() { X = 0, Y = 0 },
@@ -210,6 +212,29 @@ namespace ConsoleFrameBuffer {
         /// </summary>
         public void Clear() {
             _buffer = new CharInfo[_bufferwidth * _bufferheight];
+        }
+
+        /// <summary>
+        /// Dispose of buffer.
+        /// </summary>
+        public void Dispose() {
+            Dispose(true);
+
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing) {
+            if (!_disposed) {
+                if (disposing) {
+                    if (_h != null) { _h.Dispose(); _h = null; }
+                }
+
+                _disposed = true;
+            }
+        }
+
+        ~FrameBuffer() {
+            Dispose(false);
         }
     }
 }

@@ -105,6 +105,7 @@ namespace ConsoleFrameBuffer.Test {
 
                 if (_keyPressed.Key == ConsoleKey.Tab)
                     Console.Clear();
+
                 if (_keyPressed.Key == ConsoleKey.Escape)
                     _running = false;
             }

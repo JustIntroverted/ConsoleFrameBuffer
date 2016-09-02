@@ -1,4 +1,5 @@
-﻿using ConsoleFrameBuffer.Test.Utility;
+﻿using ConsoleFrameBuffer;
+using ConsoleFrameBuffer.Test.Utility;
 using System;
 
 namespace ConsoleFrameBuffer.Test.Mapping {
@@ -37,8 +38,10 @@ namespace ConsoleFrameBuffer.Test.Mapping {
 
             StartPos = new Point(Digger.X, Digger.Y);
 
-            Console.SetCursorPosition(0, 0);
-            Console.Write("Generating cave...");
+            using (FrameBuffer frame = new FrameBuffer(0, 0, 30, 1)) {
+                frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
+                frame.WriteBuffer();
+            }
 
             while (floorCount < (Width * Height) / 50) {
                 int dir = Program.RandomNumber.Next(0, 4);
