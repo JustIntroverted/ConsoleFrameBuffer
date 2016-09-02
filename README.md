@@ -89,8 +89,8 @@ namespace ProjectName {
 			// write the player data to the buffer frame
             _rootBuffer.Write(_playerX, _playerY, _playerID, ConsoleColor.Cyan);
 			
-			// finally, draw/write the buffer frame to the console window
-			_rootBuffer.DrawBuffer();
+			// finally, write the buffer frame to the console window
+			_rootBuffer.WriteBuffer();
 		}
 		
 		private static void Main(string[] args) {
