@@ -26,7 +26,7 @@ namespace ProjectName {
         private const int _height = 50;
 
 		// create new buffer frame
-        private ConsoleFrameBuffer _rootBuffer = new ConsoleFrameBuffer(0, 0, _width, _height);
+        private FrameBuffer _rootBuffer = new FrameBuffer(0, 0, _width, _height);
 
 		// variable to hold what key has been pressed
         private ConsoleKeyInfo _keyPressed;
