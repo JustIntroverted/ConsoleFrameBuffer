@@ -37,7 +37,6 @@ namespace ProjectName {
 		private string _playerID = "@";
 
         public Program() {
-
 			// simple loop that calls Update() and Render()
             while (_running) {
                 Update();
@@ -51,8 +50,7 @@ namespace ProjectName {
             Console.Clear();
         }
 		
-		private void Update() {
-			
+		private void Update() {		
             if (Console.KeyAvailable) {
                 _keyPressed = Console.ReadKey(true);
 
