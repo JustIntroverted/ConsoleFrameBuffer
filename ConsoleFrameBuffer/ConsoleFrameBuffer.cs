@@ -151,7 +151,7 @@ namespace ConsoleFrameBuffer {
         /// <summary>
         /// Draws the buffer frame to the console window.
         /// </summary>
-        public void DrawBuffer() {
+        public void WriteBuffer() {
             // if the handle is valid, then go ahead and write to the console
             if (!_h.IsInvalid) {
                 bool b = WriteConsoleOutput(_h, _buffer,

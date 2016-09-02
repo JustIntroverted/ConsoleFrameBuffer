@@ -76,13 +76,17 @@ namespace ConsoleFrameBuffer.Test {
                 if (_keyPressed.Key == ConsoleKey.RightArrow)
                     _rootBuffer.X++;
 
-                if (_keyPressed.Key == ConsoleKey.W)
+                if (_keyPressed.Key == ConsoleKey.W &&
+                    _caveMap.IsFloor(_player.X, _player.Y - 1))
                     _player.Y--;
-                if (_keyPressed.Key == ConsoleKey.D)
+                if (_keyPressed.Key == ConsoleKey.D &&
+                    _caveMap.IsFloor(_player.X + 1, _player.Y))
                     _player.X++;
-                if (_keyPressed.Key == ConsoleKey.S)
+                if (_keyPressed.Key == ConsoleKey.S &&
+                    _caveMap.IsFloor(_player.X, _player.Y + 1))
                     _player.Y++;
-                if (_keyPressed.Key == ConsoleKey.A)
+                if (_keyPressed.Key == ConsoleKey.A &&
+                    _caveMap.IsFloor(_player.X - 1, _player.Y))
                     _player.X--;
 
                 if (_keyPressed.Key == ConsoleKey.Escape)
@@ -120,7 +124,7 @@ namespace ConsoleFrameBuffer.Test {
             FrameBuffer.CopyBuffer(_bufferStats, _rootBuffer);
             FrameBuffer.CopyBuffer(_bufferMap, _rootBuffer);
 
-            _rootBuffer.DrawBuffer();
+            _rootBuffer.WriteBuffer();
 
             _frames++;
         }

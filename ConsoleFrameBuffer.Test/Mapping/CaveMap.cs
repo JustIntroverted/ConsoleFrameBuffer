@@ -16,11 +16,11 @@ namespace ConsoleFrameBuffer.Test.Mapping {
                 ",", "."
             };
 
-            this.Tiles = new Tile[Width + 1, Height + 1];
+            Tiles = new Tile[Width + 1, Height + 1];
 
-            for (int x = 0; x < this.Tiles.GetUpperBound(0); x++)
-                for (int y = 0; y < this.Tiles.GetUpperBound(1); y++) {
-                    this.Tiles[x, y] = new Tile(((char)219).ToString(),
+            for (int x = 0; x < Tiles.GetUpperBound(0); x++)
+                for (int y = 0; y < Tiles.GetUpperBound(1); y++) {
+                    Tiles[x, y] = new Tile(((char)219).ToString(),
                                             ConsoleColor.Gray,
                                             ConsoleColor.Black,
                                             false, true);
@@ -29,7 +29,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
             int floorCount = 0;
 
             Point Digger = new Point(Width / 2, Height / 2);
-            this.Tiles[Digger.X, Digger.Y] = new Tile(
+            Tiles[Digger.X, Digger.Y] = new Tile(
                 stoneTiles[Program.RandomNumber.Next(0, stoneTiles.Length)],
                 ConsoleColor.Gray,
                 ConsoleColor.Black,
@@ -45,7 +45,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
                 if (dir == 0 && !IsOutOfBounds(Digger.X, Digger.Y - 2)) {
                     if (!IsFloor(Digger.X, Digger.Y - 1)) floorCount++;
 
-                    this.Tiles[Digger.X, Digger.Y - 1] = new Tile(
+                    Tiles[Digger.X, Digger.Y - 1] = new Tile(
                         stoneTiles[Program.RandomNumber.Next(0, stoneTiles.Length)],
                         ConsoleColor.Gray,
                         ConsoleColor.Black,
@@ -55,7 +55,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
                 } else if (dir == 1 && !IsOutOfBounds(Digger.X + 3, Digger.Y)) {
                     if (!IsFloor(Digger.X + 1, Digger.Y)) floorCount++;
 
-                    this.Tiles[Digger.X + 1, Digger.Y] = new Tile(
+                    Tiles[Digger.X + 1, Digger.Y] = new Tile(
                         stoneTiles[Program.RandomNumber.Next(0, stoneTiles.Length)],
                         ConsoleColor.Gray,
                         ConsoleColor.Black,
@@ -65,7 +65,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
                 } else if (dir == 2 && !IsOutOfBounds(Digger.X, Digger.Y + 3)) {
                     if (!IsFloor(Digger.X, Digger.Y + 1)) floorCount++;
 
-                    this.Tiles[Digger.X, Digger.Y + 1] = new Tile(
+                    Tiles[Digger.X, Digger.Y + 1] = new Tile(
                         stoneTiles[Program.RandomNumber.Next(0, stoneTiles.Length)],
                         ConsoleColor.Gray,
                         ConsoleColor.Black,
@@ -75,7 +75,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
                 } else if (dir == 3 && !IsOutOfBounds(Digger.X - 2, Digger.Y)) {
                     if (!IsFloor(Digger.X - 1, Digger.Y)) floorCount++;
 
-                    this.Tiles[Digger.X - 1, Digger.Y] = new Tile(
+                    Tiles[Digger.X - 1, Digger.Y] = new Tile(
                         stoneTiles[Program.RandomNumber.Next(0, stoneTiles.Length)],
                         ConsoleColor.Gray,
                         ConsoleColor.Black,
@@ -97,10 +97,10 @@ namespace ConsoleFrameBuffer.Test.Mapping {
                 if (distance > 40 && IsFloor(DownFloor.X, DownFloor.Y)) break;
             }
 
-            this.Tiles[StartPos.X, StartPos.Y].ID = "^";
-            this.Tiles[StartPos.X, StartPos.Y].ForegroundColor = ConsoleColor.Cyan;
-            this.Tiles[DownFloor.X, DownFloor.Y].ID = ">";
-            this.Tiles[DownFloor.X, DownFloor.Y].ForegroundColor = ConsoleColor.Red;
+            Tiles[StartPos.X, StartPos.Y].ID = "^";
+            Tiles[StartPos.X, StartPos.Y].ForegroundColor = ConsoleColor.Cyan;
+            Tiles[DownFloor.X, DownFloor.Y].ID = ">";
+            Tiles[DownFloor.X, DownFloor.Y].ForegroundColor = ConsoleColor.Red;
         }
     }
 }

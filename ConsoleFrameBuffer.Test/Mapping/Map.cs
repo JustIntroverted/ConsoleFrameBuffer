@@ -18,7 +18,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
         }
 
         public void ComputeFOV(Point point) {
-            ResetMapVisibility();
+            ResetMapVisibility(point);
 
             for (int i = 0; i < 100; i++) {
                 float x, y;
@@ -27,7 +27,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
                 y = (float)Math.Sin((float)i);
 
                 float ox, oy;
-                int VIEW_RADIUS = 5;
+                int VIEW_RADIUS = 10;
 
                 ox = point.X + .5f;
                 oy = point.Y + .5f;
@@ -49,20 +49,38 @@ namespace ConsoleFrameBuffer.Test.Mapping {
             }
         }
 
-        // TODO: ResetMapVisibility - currently scans through whole map file
-        private void ResetMapVisibility() {
-            for (int x = 0; x < Width; x++)
-                for (int y = 0; y < Height; y++) {
-                    if (!IsOutOfBounds(x, y))
-                        Tiles[x, y].IsVisible = false;
+        // TODO: ResetMapVisibility - eh, kind of reusing code, but whatevs
+        private void ResetMapVisibility(Point point) {
+            for (int i = 0; i < 100; i++) {
+                float x, y;
+
+                x = (float)Math.Cos((float)i);
+                y = (float)Math.Sin((float)i);
+
+                float ox, oy;
+                int VIEW_RADIUS = 50;
+
+                ox = point.X + .5f;
+                oy = point.Y + .5f;
+
+                for (int j = 0; j < VIEW_RADIUS; j++) {
+                    ox += x;
+                    oy += y;
+
+                    if (!IsOutOfBounds((int)ox, (int)oy)) {
+                        if ((int)ox != point.X || (int)oy != point.Y) {
+                            Tiles[(int)ox, (int)oy].IsVisible = false;
+                        }
+                    }
                 }
+            }
         }
 
         public void CleanMap(string id, string toid, int loops) {
             for (int j = 0; j < loops; j++) {
                 for (int x = 1; x < Tiles.GetUpperBound(0) - 1; x++) {
                     for (int y = 1; y < Tiles.GetUpperBound(1) - 1; y++) {
-                        if (Tiles[x, y].ID == id && getNeighbors(x, y, id) < 6) {
+                        if (Tiles[x, y].ID == id && getNeighbors(x, y, id) < 3) {
                             Tiles[x, y] = new Tile(toid,
                                                     ConsoleColor.Gray,
                                                     ConsoleColor.Black,
