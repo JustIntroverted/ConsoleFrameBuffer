@@ -1,4 +1,11 @@
-﻿using ConsoleFrameBuffer.Test.Mapping;
+﻿/*
+    I'll add some comments into the test project at some point.  For now,
+    follow the instructions in the README.md file to see how to set a project
+    up using ConsoleFrameBuffer.
+*/
+
+using ConsoleFrameBuffer.Test.Mapping;
+using ConsoleFrameBuffer.Test.Utility;
 using System;
 using System.Diagnostics;
 
@@ -7,7 +14,7 @@ namespace ConsoleFrameBuffer.Test {
     internal class Program {
         private bool _running = true;
         private const int _width = 80;
-        private const int _height = 25;
+        private const int _height = 50;
 
         private ConsoleFrameBuffer _rootBuffer = new ConsoleFrameBuffer(0, 0, _width, _height);
         private ConsoleFrameBuffer _bufferStats = new ConsoleFrameBuffer(0, 0, _width, 5);
@@ -28,7 +35,7 @@ namespace ConsoleFrameBuffer.Test {
         private TimeSpan _sample;
 
         public Program() {
-            _caveMap.Generate(500, 500);
+            _caveMap.Generate(500, 100);
 
             _player.X = _caveMap.StartPos.X;
             _player.Y = _caveMap.StartPos.Y;
@@ -82,6 +89,7 @@ namespace ConsoleFrameBuffer.Test {
                     _running = false;
             }
 
+            _caveMap.ComputeFOV(_player);
             _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height);
         }
 
@@ -117,15 +125,13 @@ namespace ConsoleFrameBuffer.Test {
             _frames++;
         }
 
-        private ConsoleColor color = ConsoleColor.Gray;
         private int _colortick = 0;
-        private ConsoleColor _bgcolor = ConsoleColor.Black;
-        private int _tileshuffletick = 0;
 
         private void DrawMap() {
+            ConsoleColor color = ConsoleColor.Gray;
+
             if (_colortick >= 5000) {
-                color = RandomColor();
-                _bgcolor = RandomColor();
+                color = Tile.DarkenTile(RandomColor());
                 _colortick = 0;
             }
 
@@ -134,13 +140,16 @@ namespace ConsoleFrameBuffer.Test {
                     if (!_caveMap.IsOutOfBounds(x + _playerCamera.X, y + _playerCamera.Y)) {
                         Tile tmpTile = _caveMap.Tiles[x + _playerCamera.X, y + _playerCamera.Y];
 
-                        _bufferMap.Write(x, y, tmpTile.ID, color, tmpTile.BackgroundColor);
+                        if (tmpTile.IsVisible) {
+                            _bufferMap.Write(x, y, tmpTile.ID, tmpTile.ForegroundColor, tmpTile.BackgroundColor);
+                        } else if (tmpTile.IsExplored) {
+                            _bufferMap.Write(x, y, tmpTile.ID, Tile.DarkenTile(tmpTile.ForegroundColor), Tile.DarkenTile(tmpTile.BackgroundColor));
+                        }
                     }
                 }
             }
 
             _colortick++;
-            _tileshuffletick++;
         }
 
         private ConsoleColor RandomColor() {

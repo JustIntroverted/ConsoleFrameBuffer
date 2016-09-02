@@ -89,6 +89,7 @@ namespace ConsoleFrameBuffer {
         }
 
         public ConsoleFrameBuffer(int X, int Y, int Width, int Height) {
+            // grabs the handle for the console window
             _h = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
 
             this.X = X;
@@ -106,6 +107,15 @@ namespace ConsoleFrameBuffer {
             };
         }
 
+        /// <summary>
+        /// "Writes" the string to the buffer frame.  DrawBuffer must be called in order
+        /// for the string to display.
+        /// </summary>
+        /// <param name="X">X position</param>
+        /// <param name="Y">Y position</param>
+        /// <param name="Text">The string to be written to the buffer frame.</param>
+        /// <param name="ForegroundColor">The foreground color of the string.</param>
+        /// <param name="BackgroundColor">The background color of the string.</param>
         public void Write(int X, int Y, string Text,
             ConsoleColor ForegroundColor = ConsoleColor.Gray,
             ConsoleColor BackgroundColor = ConsoleColor.Black) {
@@ -138,7 +148,11 @@ namespace ConsoleFrameBuffer {
             }
         }
 
+        /// <summary>
+        /// Draws the buffer frame to the console window.
+        /// </summary>
         public void DrawBuffer() {
+            // if the handle is valid, then go ahead and write to the console
             if (!_h.IsInvalid) {
                 bool b = WriteConsoleOutput(_h, _buffer,
                     new Coord() { X = (short)(_bufferwidth), Y = (short)(_bufferheight) },
@@ -147,12 +161,22 @@ namespace ConsoleFrameBuffer {
             }
         }
 
+        /// <summary>
+        /// Copies the source buffer frame to the destination buffer frame.
+        /// </summary>
+        /// <param name="src">Buffer frame to be copied.</param>
+        /// <param name="dest">Buffer frame that will be copied over by the source buffer frame.</param>
         public static void CopyBuffer(ConsoleFrameBuffer src, ConsoleFrameBuffer dest) {
             for (int i = 0; i < src._buffer.Length; i++)
                 if (src._buffer[i].Char.AsciiChar > 0)
                     dest._buffer[i + src._bufferwidth * src.Y] = src._buffer[i];
         }
 
+        /// <summary>
+        /// Sets the buffer frame's position.
+        /// </summary>
+        /// <param name="X">X position</param>
+        /// <param name="Y">Y position</param>
         public void SetBufferPosition(int X, int Y) {
             this.X = X;
             this.Y = Y;
@@ -167,6 +191,11 @@ namespace ConsoleFrameBuffer {
             };
         }
 
+        /// <summary>
+        /// Resizes the buffer frame.
+        /// </summary>
+        /// <param name="Width">Width of buffer frame.</param>
+        /// <param name="Height">Height of buffer frame.</param>
         public void ResizeBuffer(int Width, int Height) {
             _bufferwidth = Width;
             _bufferheight = Height;
@@ -174,6 +203,9 @@ namespace ConsoleFrameBuffer {
             _buffer = new CharInfo[_bufferwidth * _bufferheight];
         }
 
+        /// <summary>
+        /// Clears the buffer frame.
+        /// </summary>
         public void Clear() {
             _buffer = new CharInfo[_bufferwidth * _bufferheight];
         }

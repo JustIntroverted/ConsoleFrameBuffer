@@ -1,40 +1,11 @@
-﻿using System;
+﻿using ConsoleFrameBuffer.Test.Utility;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ConsoleFrameBuffer.Test.Mapping {
-
-    public class Point {
-        public int X { get; set; }
-        public int Y { get; set; }
-
-        public Point() : this(0, 0) {
-        }
-
-        public Point(int X, int Y) {
-            this.X = X;
-            this.Y = Y;
-        }
-    }
-
-    public struct Camera {
-        public int X;
-        public int Y;
-        private Point currentPoint;
-
-        public void FixCamera(Point p, int width, int height) {
-            this.X = ((p.X + 1) - (width / 2) - 1);
-            this.Y = ((p.Y - 0) - (height / 2) - 1);
-
-            currentPoint = p;
-        }
-
-        public Point GetPoint() {
-            return currentPoint;
-        }
-    }
 
     public abstract class Map {
         public int Width;
@@ -45,12 +16,57 @@ namespace ConsoleFrameBuffer.Test.Mapping {
         public virtual void Generate(int Width = 80, int Height = 25) {
         }
 
+        public void ComputeFOV(int X, int Y) {
+            ComputeFOV(new Point(X, Y));
+        }
+
+        public void ComputeFOV(Point point) {
+            ResetMapVisibility();
+
+            for (int i = 0; i < 100; i++) {
+                float x, y;
+
+                x = (float)Math.Cos((float)i);
+                y = (float)Math.Sin((float)i);
+
+                float ox, oy;
+                int VIEW_RADIUS = 5;
+
+                ox = point.X + .5f;
+                oy = point.Y + .5f;
+
+                for (int j = 0; j < VIEW_RADIUS; j++) {
+                    ox += x;
+                    oy += y;
+
+                    if (!IsOutOfBounds((int)ox, (int)oy)) {
+                        if ((int)ox != point.X || (int)oy != point.Y) {
+                            Tiles[(int)ox, (int)oy].IsVisible = true;
+                            Tiles[(int)ox, (int)oy].IsExplored = true;
+
+                            if (Tiles[(int)ox, (int)oy].Wall)
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // TODO: ResetMapVisibility - currently scans through whole map file
+        private void ResetMapVisibility() {
+            for (int x = 0; x < Width; x++)
+                for (int y = 0; y < Height; y++) {
+                    if (!IsOutOfBounds(x, y))
+                        Tiles[x, y].IsVisible = false;
+                }
+        }
+
         public void CleanMap(string id, string toid, int loops) {
             for (int j = 0; j < loops; j++) {
-                for (int x = 1; x < this.Tiles.GetUpperBound(0) - 1; x++) {
-                    for (int y = 1; y < this.Tiles.GetUpperBound(1) - 1; y++) {
-                        if (Tiles[x, y].ID == id && getNeighbors(x, y, id) < 5) {
-                            this.Tiles[x, y] = new Tile(toid,
+                for (int x = 1; x < Tiles.GetUpperBound(0) - 1; x++) {
+                    for (int y = 1; y < Tiles.GetUpperBound(1) - 1; y++) {
+                        if (Tiles[x, y].ID == id && getNeighbors(x, y, id) < 6) {
+                            Tiles[x, y] = new Tile(toid,
                                                     ConsoleColor.Gray,
                                                     ConsoleColor.Black,
                                                     true);

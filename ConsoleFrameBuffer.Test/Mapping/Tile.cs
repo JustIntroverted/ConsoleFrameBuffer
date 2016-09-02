@@ -9,6 +9,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
         public bool Walkable { get; set; }
         public bool Wall { get; set; }
         public bool IsExplored { get; set; }
+        public bool IsVisible { get; set; }
 
         public Tile() : this(string.Empty) {
         }
@@ -21,6 +22,15 @@ namespace ConsoleFrameBuffer.Test.Mapping {
             this.Walkable = Walkable;
             this.Wall = Wall;
             this.IsExplored = false;
+        }
+
+        public static ConsoleColor DarkenTile(ConsoleColor Color) {
+            if (Color == ConsoleColor.Black)
+                return Color;
+            if (Color != ConsoleColor.Gray && Color != ConsoleColor.DarkGray)
+                return Color - 0x0008;
+
+            return Color + 0x0001;
         }
     }
 }

@@ -48,6 +48,8 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Mapping\Tile.cs" />
+    <Compile Include="Utility\Camera.cs" />
+    <Compile Include="Utility\Point.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
