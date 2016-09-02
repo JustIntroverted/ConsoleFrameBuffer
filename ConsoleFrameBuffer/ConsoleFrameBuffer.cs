@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace ConsoleFrameBuffer {
 
-    public class ConsoleFrameBuffer {
+    public class FrameBuffer {
 
         #region Structs
 
@@ -85,10 +85,10 @@ namespace ConsoleFrameBuffer {
         private CharInfo[] _buffer;
         private SmallRect _rect;
 
-        public ConsoleFrameBuffer() : this(0, 0, 80, 25) {
+        public FrameBuffer() : this(0, 0, 80, 25) {
         }
 
-        public ConsoleFrameBuffer(int X, int Y, int Width, int Height) {
+        public FrameBuffer(int X, int Y, int Width, int Height) {
             // grabs the handle for the console window
             _h = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
 
@@ -166,7 +166,7 @@ namespace ConsoleFrameBuffer {
         /// </summary>
         /// <param name="src">Buffer frame to be copied.</param>
         /// <param name="dest">Buffer frame that will be copied over by the source buffer frame.</param>
-        public static void CopyBuffer(ConsoleFrameBuffer src, ConsoleFrameBuffer dest) {
+        public static void CopyBuffer(FrameBuffer src, FrameBuffer dest) {
             for (int i = 0; i < src._buffer.Length; i++)
                 if (src._buffer[i].Char.AsciiChar > 0)
                     dest._buffer[i + src._bufferwidth * src.Y] = src._buffer[i];

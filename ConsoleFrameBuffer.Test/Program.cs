@@ -16,9 +16,9 @@ namespace ConsoleFrameBuffer.Test {
         private const int _width = 80;
         private const int _height = 50;
 
-        private ConsoleFrameBuffer _rootBuffer = new ConsoleFrameBuffer(0, 0, _width, _height);
-        private ConsoleFrameBuffer _bufferStats = new ConsoleFrameBuffer(0, 0, _width, 5);
-        private ConsoleFrameBuffer _bufferMap = new ConsoleFrameBuffer(0, 5, _width, _height - 5);
+        private FrameBuffer _rootBuffer = new FrameBuffer(0, 0, _width, _height);
+        private FrameBuffer _bufferStats = new FrameBuffer(0, 0, _width, 5);
+        private FrameBuffer _bufferMap = new FrameBuffer(0, 5, _width, _height - 5);
 
         private ConsoleKeyInfo _keyPressed;
 
@@ -117,8 +117,8 @@ namespace ConsoleFrameBuffer.Test {
 
             _bufferMap.Write(_player.X - _playerCamera.X, _player.Y - _playerCamera.Y, "@", ConsoleColor.Red);
 
-            ConsoleFrameBuffer.CopyBuffer(_bufferStats, _rootBuffer);
-            ConsoleFrameBuffer.CopyBuffer(_bufferMap, _rootBuffer);
+            FrameBuffer.CopyBuffer(_bufferStats, _rootBuffer);
+            FrameBuffer.CopyBuffer(_bufferMap, _rootBuffer);
 
             _rootBuffer.DrawBuffer();
 
