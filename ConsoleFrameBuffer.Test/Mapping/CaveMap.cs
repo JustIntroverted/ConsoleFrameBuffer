@@ -1,5 +1,4 @@
-﻿using ConsoleFrameBuffer;
-using ConsoleFrameBuffer.Test.Utility;
+﻿using ConsoleFrameBuffer.Test.Utility;
 using System;
 
 namespace ConsoleFrameBuffer.Test.Mapping {
@@ -38,16 +37,11 @@ namespace ConsoleFrameBuffer.Test.Mapping {
 
             StartPos = new Point(Digger.X, Digger.Y);
 
-            using (FrameBuffer frame = new FrameBuffer(0, 0, 30, 1)) {
-                frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
-                frame.WriteBuffer();
-            }
-
             while (floorCount < (Width * Height) / 50) {
                 int dir = Program.RandomNumber.Next(0, 4);
 
                 if (dir == 0 && !IsOutOfBounds(Digger.X, Digger.Y - 2)) {
-                    if (!IsFloor(Digger.X, Digger.Y - 1)) floorCount++;
+                    if (!IsWalkable(Digger.X, Digger.Y - 1)) floorCount++;
 
                     Tiles[Digger.X, Digger.Y - 1] = new Tile(
                         stoneTiles[Program.RandomNumber.Next(0, stoneTiles.Length)],
@@ -57,7 +51,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
 
                     Digger.Y--;
                 } else if (dir == 1 && !IsOutOfBounds(Digger.X + 3, Digger.Y)) {
-                    if (!IsFloor(Digger.X + 1, Digger.Y)) floorCount++;
+                    if (!IsWalkable(Digger.X + 1, Digger.Y)) floorCount++;
 
                     Tiles[Digger.X + 1, Digger.Y] = new Tile(
                         stoneTiles[Program.RandomNumber.Next(0, stoneTiles.Length)],
@@ -67,7 +61,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
 
                     Digger.X++;
                 } else if (dir == 2 && !IsOutOfBounds(Digger.X, Digger.Y + 3)) {
-                    if (!IsFloor(Digger.X, Digger.Y + 1)) floorCount++;
+                    if (!IsWalkable(Digger.X, Digger.Y + 1)) floorCount++;
 
                     Tiles[Digger.X, Digger.Y + 1] = new Tile(
                         stoneTiles[Program.RandomNumber.Next(0, stoneTiles.Length)],
@@ -77,7 +71,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
 
                     Digger.Y++;
                 } else if (dir == 3 && !IsOutOfBounds(Digger.X - 2, Digger.Y)) {
-                    if (!IsFloor(Digger.X - 1, Digger.Y)) floorCount++;
+                    if (!IsWalkable(Digger.X - 1, Digger.Y)) floorCount++;
 
                     Tiles[Digger.X - 1, Digger.Y] = new Tile(
                         stoneTiles[Program.RandomNumber.Next(0, stoneTiles.Length)],
@@ -98,10 +92,10 @@ namespace ConsoleFrameBuffer.Test.Mapping {
                 DownFloor = new Point(Program.RandomNumber.Next(0, Width), Program.RandomNumber.Next(0, Height));
                 distance = (int)Math.Sqrt((Math.Pow(DownFloor.X - StartPos.X, 2) + Math.Pow(DownFloor.Y - StartPos.Y, 2)));
 
-                if (distance > 40 && IsFloor(DownFloor.X, DownFloor.Y)) break;
+                if (distance > 40 && IsWalkable(DownFloor.X, DownFloor.Y)) break;
             }
 
-            Tiles[StartPos.X, StartPos.Y].ID = "^";
+            Tiles[StartPos.X, StartPos.Y].ID = "<";
             Tiles[StartPos.X, StartPos.Y].ForegroundColor = ConsoleColor.Cyan;
             Tiles[DownFloor.X, DownFloor.Y].ID = ">";
             Tiles[DownFloor.X, DownFloor.Y].ForegroundColor = ConsoleColor.Red;

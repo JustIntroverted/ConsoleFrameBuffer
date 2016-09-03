@@ -8,6 +8,7 @@ using ConsoleFrameBuffer.Test.Mapping;
 using ConsoleFrameBuffer.Test.Utility;
 using System;
 using System.Diagnostics;
+using System.Threading;
 
 namespace ConsoleFrameBuffer.Test {
 
@@ -29,13 +30,18 @@ namespace ConsoleFrameBuffer.Test {
         private Array colors = Enum.GetValues(typeof(ConsoleColor));
 
         public static Random RandomNumber = new Random();
-        private Stopwatch _sw = new Stopwatch();
+        private static Stopwatch _sw = new Stopwatch();
         private long _frames;
         private float _value;
         private TimeSpan _sample;
 
         public Program() {
-            _caveMap.Generate(500, 500);
+            using (FrameBuffer frame = new FrameBuffer(0, 0, 30, 1)) {
+                frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
+                frame.WriteBuffer();
+            }
+
+            _caveMap.Generate(500, 100);
 
             _player.X = _caveMap.StartPos.X;
             _player.Y = _caveMap.StartPos.Y;
@@ -56,6 +62,14 @@ namespace ConsoleFrameBuffer.Test {
         }
 
         private void Update() {
+            if (_sw.Elapsed > _sample) {
+                _value = (float)(_frames / _sw.Elapsed.TotalSeconds);
+
+                _sw.Reset();
+                _sw.Start();
+                _frames = 0;
+            }
+
             // resizes frames and console settings based on console width/height
             if (Console.WindowWidth != _width || Console.WindowHeight != _height) {
                 _width = Console.WindowWidth;
@@ -68,14 +82,6 @@ namespace ConsoleFrameBuffer.Test {
                 Console.BufferHeight = _height;
                 Console.WindowWidth = _width;
                 Console.WindowHeight = _height;
-            }
-
-            if (_sw.Elapsed > _sample) {
-                _value = (float)(_frames / _sw.Elapsed.TotalSeconds);
-
-                _sw.Reset();
-                _sw.Start();
-                _frames = 0;
             }
 
             if (Console.KeyAvailable) {
@@ -91,17 +97,33 @@ namespace ConsoleFrameBuffer.Test {
                     _rootBuffer.X++;
 
                 if (_keyPressed.Key == ConsoleKey.W &&
-                    _caveMap.IsFloor(_player.X, _player.Y - 1))
+                    _caveMap.IsWalkable(_player.X, _player.Y - 1))
                     _player.Y--;
                 if (_keyPressed.Key == ConsoleKey.D &&
-                    _caveMap.IsFloor(_player.X + 1, _player.Y))
+                    _caveMap.IsWalkable(_player.X + 1, _player.Y))
                     _player.X++;
                 if (_keyPressed.Key == ConsoleKey.S &&
-                    _caveMap.IsFloor(_player.X, _player.Y + 1))
+                    _caveMap.IsWalkable(_player.X, _player.Y + 1))
                     _player.Y++;
                 if (_keyPressed.Key == ConsoleKey.A &&
-                    _caveMap.IsFloor(_player.X - 1, _player.Y))
+                    _caveMap.IsWalkable(_player.X - 1, _player.Y))
                     _player.X--;
+
+                if (_keyPressed.Modifiers == ConsoleModifiers.Shift &&
+                    _keyPressed.Key == ConsoleKey.OemPeriod) {
+                    if (_caveMap.DownFloor == _player) {
+                        Console.Clear();
+
+                        using (FrameBuffer frame = new FrameBuffer(0, 0, 30, 1)) {
+                            frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
+                            frame.WriteBuffer();
+                        }
+
+                        _caveMap.Generate(500, 100);
+
+                        _player = _caveMap.StartPos;
+                    }
+                }
 
                 if (_keyPressed.Key == ConsoleKey.Tab)
                     Console.Clear();

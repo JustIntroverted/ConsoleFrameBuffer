@@ -12,6 +12,14 @@
             this.Y = Y;
         }
 
+        public static bool operator ==(Point one, Point two) {
+            return one.X == two.X && one.Y == two.Y ? true : false;
+        }
+
+        public static bool operator !=(Point one, Point two) {
+            return one.X != two.X || one.Y != two.Y ? true : false;
+        }
+
         public static Point operator +(Point one, Point two) {
             return new Point(one.X + two.X, one.Y + two.Y);
         }

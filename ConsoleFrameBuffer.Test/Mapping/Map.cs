@@ -5,13 +5,12 @@ using System.Collections.Generic;
 namespace ConsoleFrameBuffer.Test.Mapping {
 
     public abstract class Map {
-        public int Width;
-        public int Height;
+        public int Width { get; protected set; }
+        public int Height { get; protected set; }
 
-        public Tile[,] Tiles;
+        public Tile[,] Tiles { get; protected set; }
 
-        public virtual void Generate(int Width = 80, int Height = 25) {
-        }
+        public abstract void Generate(int Width = 80, int Height = 25);
 
         public void ComputeFOV(int X, int Y) {
             ComputeFOV(new Point(X, Y));
@@ -97,7 +96,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
             List<Point> list = getArea(9, 1, new Point(x, y));
 
             foreach (Point p in list) {
-                if (!(p.X < 0 || p.X > Tiles.GetUpperBound(0) - 1 || p.Y < 0 || p.Y > Tiles.GetUpperBound(1) - 1)) {
+                if (!IsOutOfBounds(p.X, p.Y)) {
                     if (Tiles[p.X, p.Y].ID == id)
                         count++;
                 }
@@ -122,7 +121,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
             return list;
         }
 
-        public bool IsFloor(int x, int y) {
+        public bool IsWalkable(int x, int y) {
             if (Tiles[x, y].Walkable) return true;
 
             return false;

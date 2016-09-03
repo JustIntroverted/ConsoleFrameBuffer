@@ -214,9 +214,6 @@ namespace ConsoleFrameBuffer {
             _buffer = new CharInfo[_bufferwidth * _bufferheight];
         }
 
-        /// <summary>
-        /// Dispose of buffer.
-        /// </summary>
         public void Dispose() {
             Dispose(true);
 
@@ -231,10 +228,6 @@ namespace ConsoleFrameBuffer {
 
                 _disposed = true;
             }
-        }
-
-        ~FrameBuffer() {
-            Dispose(false);
         }
     }
 }
