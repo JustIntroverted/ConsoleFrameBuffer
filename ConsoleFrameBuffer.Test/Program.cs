@@ -8,7 +8,6 @@ using ConsoleFrameBuffer.Test.Mapping;
 using ConsoleFrameBuffer.Test.Utility;
 using System;
 using System.Diagnostics;
-using System.Threading;
 
 namespace ConsoleFrameBuffer.Test {
 
@@ -17,12 +16,13 @@ namespace ConsoleFrameBuffer.Test {
         private static int _width = 80;
         private static int _height = 25;
 
-        private FrameBuffer _rootBuffer = new FrameBuffer(0, 0, _width, _height);
-        private FrameBuffer _bufferStats = new FrameBuffer(0, 0, _width, 5);
-        private FrameBuffer _bufferMap = new FrameBuffer(0, 5, _width, _height - 5);
+        private RootFrameBuffer _rootBuffer = new RootFrameBuffer(0, 0, _width, _height);
+        private RootFrameBuffer _bufferStats = new RootFrameBuffer(0, 0, _width, 5);
+        private RootFrameBuffer _bufferMap = new RootFrameBuffer(0, 5, _width, _height - 5);
 
         private ConsoleKeyInfo _keyPressed;
 
+        private string _playerName = string.Empty;
         private Point _player = new Point();
         private Camera _playerCamera = new Camera();
 
@@ -36,7 +36,13 @@ namespace ConsoleFrameBuffer.Test {
         private TimeSpan _sample;
 
         public Program() {
-            using (FrameBuffer frame = new FrameBuffer(0, 0, 30, 1)) {
+            using (RootFrameBuffer frame = new RootFrameBuffer(0, 0, 30, 1)) {
+                frame.Write(0, 0, "Player Name: ", ConsoleColor.White, ConsoleColor.Black, true);
+                frame.WriteBuffer();
+
+                if (_playerName.Trim().Length == 0)
+                    _playerName = _rootBuffer.ReadLine();
+
                 frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
                 frame.WriteBuffer();
             }
@@ -58,6 +64,10 @@ namespace ConsoleFrameBuffer.Test {
                 Render();
             }
 
+            _bufferMap.Dispose();
+            _bufferStats.Dispose();
+            _rootBuffer.Dispose();
+
             Console.Clear();
         }
 
@@ -78,10 +88,13 @@ namespace ConsoleFrameBuffer.Test {
                 _bufferStats.ResizeBuffer(_width, 5);
                 _bufferMap.ResizeBuffer(_width, _height - 5);
 
-                Console.BufferWidth = _width;
-                Console.BufferHeight = _height;
-                Console.WindowWidth = _width;
-                Console.WindowHeight = _height;
+                // TODO: fix out of range error
+                if (_width >= 0 && _height >= 0) {
+                    Console.BufferWidth = _width;
+                    Console.BufferHeight = _height;
+                    Console.WindowWidth = _width;
+                    Console.WindowHeight = _height;
+                }
             }
 
             if (Console.KeyAvailable) {
@@ -112,16 +125,22 @@ namespace ConsoleFrameBuffer.Test {
                 if (_keyPressed.Modifiers == ConsoleModifiers.Shift &&
                     _keyPressed.Key == ConsoleKey.OemPeriod) {
                     if (_caveMap.DownFloor == _player) {
-                        Console.Clear();
+                        using (RootFrameBuffer frame = new RootFrameBuffer(5, 10, 50, 3)) {
+                            string ans = string.Empty;
 
-                        using (FrameBuffer frame = new FrameBuffer(0, 0, 30, 1)) {
-                            frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
+                            frame.Write(1, 1, "Do you wish to drop down a floor? yes/no", ConsoleColor.White, ConsoleColor.Black, true);
                             frame.WriteBuffer();
+
+                            ans = frame.ReadLine().Trim().ToLower();
+
+                            if (ans == "yes") {
+                                frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
+                                frame.WriteBuffer();
+
+                                _caveMap.Generate(500, 100);
+                                _player = _caveMap.StartPos;
+                            }
                         }
-
-                        _caveMap.Generate(500, 100);
-
-                        _player = _caveMap.StartPos;
                     }
                 }
 
@@ -148,20 +167,21 @@ namespace ConsoleFrameBuffer.Test {
 
             _bufferStats.Write(0, 1, "+");
             _bufferStats.Write(_width - 1, 1, "+");
-            _bufferStats.Write(2, 1, string.Format("x:{0} - y:{1} // rx:{2} - ry:{3} // rw:{4} - rh:{5}",
-                _player.X, _player.Y, _rootBuffer.X, _rootBuffer.Y, _rootBuffer.Width, _rootBuffer.Height), ConsoleColor.White);
+            _bufferStats.Write(2, 1, string.Format("x:{0} - y:{1} // rx:{2} - ry:{3} // rw:{4} - rh:{5} // cw:{6} - ch:{7}",
+                _player.X, _player.Y, _rootBuffer.X, _rootBuffer.Y, _rootBuffer.Width,
+                _rootBuffer.Height, Console.WindowWidth, Console.WindowHeight), ConsoleColor.White);
             _bufferStats.Write(_width - string.Format("fps: {0}", (int)_value).Length - 2, 1,
                 string.Format("fps: {0}", (int)_value), ConsoleColor.Yellow);
 
-            string help = "Use WASD to move '@' around.  Use ARROW KEYS to move the frame around.";
+            string help = "Use WASD to move '@' around.  \rUse ARROW KEYS to move the frame around.";
             _bufferStats.Write(_width / 2 - (help.Length / 2), 3, help, ConsoleColor.White);
 
             DrawMap();
 
             _bufferMap.Write(_player.X - _playerCamera.X, _player.Y - _playerCamera.Y, "@", ConsoleColor.Red);
 
-            FrameBuffer.CopyBuffer(_bufferStats, _rootBuffer);
-            FrameBuffer.CopyBuffer(_bufferMap, _rootBuffer);
+            RootFrameBuffer.CopyBuffer(_bufferStats, _rootBuffer);
+            RootFrameBuffer.CopyBuffer(_bufferMap, _rootBuffer);
 
             _rootBuffer.WriteBuffer();
 
@@ -207,7 +227,7 @@ namespace ConsoleFrameBuffer.Test {
             Console.WindowWidth = _width;
             Console.WindowHeight = _height;
 
-            Console.CursorVisible = false;
+            //Console.CursorVisible = false;
 
             Program prog = new Program();
         }

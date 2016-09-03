@@ -24,6 +24,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
             this.IsExplored = false;
         }
 
+        // TODO: this isn't a fail proof way of darkening the colors
         public static ConsoleColor DarkenTile(ConsoleColor Color) {
             if (Color == ConsoleColor.Black)
                 return Color;

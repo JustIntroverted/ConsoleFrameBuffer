@@ -1,107 +1,48 @@
-﻿using Microsoft.Win32.SafeHandles;
+﻿using ConsoleFrameBuffer.API;
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Text;
 
 namespace ConsoleFrameBuffer {
 
-    public class FrameBuffer : IDisposable {
-
-        #region Structs
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct Coord {
-            public short X;
-            public short Y;
-
-            public Coord(short X, short Y) {
-                this.X = X;
-                this.Y = Y;
-            }
-        };
-
-        [StructLayout(LayoutKind.Explicit)]
-        private struct CharUnion {
-
-            [FieldOffset(0)]
-            public char UnicodeChar;
-
-            [FieldOffset(0)]
-            public byte AsciiChar;
-        }
-
-        [StructLayout(LayoutKind.Explicit)]
-        private struct CharInfo {
-
-            [FieldOffset(0)]
-            public CharUnion Char;
-
-            [FieldOffset(2)]
-            public short Attributes;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct SmallRect {
-            public short Left;
-            public short Top;
-            public short Right;
-            public short Bottom;
-        }
-
-        #endregion Structs
-
-        #region DLL Imports
-
-        [DllImport("Kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        private static extern SafeFileHandle CreateFile(
-            string fileName,
-            [MarshalAs(UnmanagedType.U4)] uint fileAccess,
-            [MarshalAs(UnmanagedType.U4)] uint fileShare,
-            IntPtr securityAttributes,
-            [MarshalAs(UnmanagedType.U4)] FileMode creationDisposition,
-            [MarshalAs(UnmanagedType.U4)] int flags,
-            IntPtr template);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool WriteConsoleOutput(
-          SafeFileHandle hConsoleOutput,
-          CharInfo[] lpBuffer,
-          Coord dwBufferSize,
-          Coord dwBufferCoord,
-          ref SmallRect lpWriteRegion);
-
-        #endregion DLL Imports
-
+    public class RootFrameBuffer : IDisposable {
         private bool _disposed = false;
 
         public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
         public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
-        public int Width { get { return _bufferwidth; } }
-        public int Height { get { return _bufferheight; } }
+        public int CursorX { get; set; }
+        public int CursorY { get; set; }
+        public int Width { get { return _bufferwidth; } protected set { _bufferwidth = (short)(value < 0 ? 0 : value); } }
+        public int Height { get { return _bufferheight; } protected set { _bufferheight = (short)(value < 0 ? 0 : value); } }
         private short _x;
         private short _y;
-        private int _bufferwidth { get; set; }
-        private int _bufferheight { get; set; }
+        private Coord _cursorPosition;
+        private short _bufferwidth;
+        private short _bufferheight;
 
-        private SafeFileHandle _h;
+        private SafeFileHandle _hConsoleOut;
+        private SafeFileHandle _hConsoleIn;
         private CharInfo[] _buffer;
-        private SmallRect _rect;
+        private StringBuilder _read = new StringBuilder();
+        private SMALL_RECT _rect;
 
-        public FrameBuffer() : this(0, 0, 80, 25) {
+        public RootFrameBuffer() : this(0, 0, 80, 25) {
         }
 
-        public FrameBuffer(int X, int Y, int Width, int Height) {
+        public RootFrameBuffer(int X, int Y, int Width, int Height) {
             // grabs the handle for the console window
-            _h = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+            _hConsoleOut = APICall.CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+            _hConsoleIn = APICall.CreateFile("CONIN$", 0x80000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
 
             this.X = X;
             this.Y = Y;
-            _bufferwidth = Width;
-            _bufferheight = Height;
+            this.Width = Width;
+            this.Height = Height;
 
             _buffer = new CharInfo[_bufferwidth * _bufferheight];
 
-            _rect = new SmallRect() {
+            _rect = new SMALL_RECT() {
                 Left = (short)this.X,
                 Top = (short)this.Y,
                 Right = (short)(_bufferwidth + this.X),
@@ -118,9 +59,13 @@ namespace ConsoleFrameBuffer {
         /// <param name="Text">The string to be written to the buffer frame.</param>
         /// <param name="ForegroundColor">The foreground color of the string.</param>
         /// <param name="BackgroundColor">The background color of the string.</param>
+        /// <param name="UpdateCursorPosition">If you choose to update the console cursor position
+        /// with each update.  Setting this to 'true' will cause performance issues.</param>
         public void Write(int X, int Y, string Text,
             ConsoleColor ForegroundColor = ConsoleColor.Gray,
-            ConsoleColor BackgroundColor = ConsoleColor.Black) {
+            ConsoleColor BackgroundColor = ConsoleColor.Black,
+            bool UpdateCursorPosition = false) {
+            if (_buffer.Length <= 0) return;
             if (Text.Length > _buffer.Length) Text = Text.Substring(0, _buffer.Length - 1);
 
             int x = 0, y = 0;
@@ -148,6 +93,37 @@ namespace ConsoleFrameBuffer {
                         break;
                 }
             }
+
+            if (UpdateCursorPosition)
+                SetCursorPosition(x, y);
+        }
+
+        /// <summary>
+        /// Reads the current keyboard input.
+        /// </summary>
+        /// <returns>Returns input as a string.</returns>
+        public string ReadLine() {
+            uint read = 0;
+
+            if (APICall.ReadConsole(_hConsoleIn, _read, 256, out read, IntPtr.Zero)) {
+                return _read.ToString(0, (int)read - 1);
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Sets the console cursor position relative to the buffer frame.
+        /// </summary>
+        /// <param name="X">X position</param>
+        /// <param name="Y">Y position</param>
+        public void SetCursorPosition(int X, int Y) {
+            _cursorPosition = new Coord((short)(X + this.X), (short)(Y + this.Y));
+
+            if (!APICall.SetConsoleCursorPosition(_hConsoleOut, _cursorPosition)) {
+                Write(0, 0, "Failed to update cursor position.", ConsoleColor.Red);
+                WriteBuffer();
+            }
         }
 
         /// <summary>
@@ -155,9 +131,9 @@ namespace ConsoleFrameBuffer {
         /// </summary>
         public void WriteBuffer() {
             // if the handle is valid, then go ahead and write to the console
-            if (_h != null && !_h.IsInvalid) {
-                bool b = WriteConsoleOutput(_h, _buffer,
-                    new Coord() { X = (short)(_bufferwidth), Y = (short)(_bufferheight) },
+            if (_hConsoleOut != null && !_hConsoleOut.IsInvalid) {
+                bool b = APICall.WriteConsoleOutput(_hConsoleOut, _buffer,
+                    new Coord() { X = _bufferwidth, Y = _bufferheight },
                     new Coord() { X = 0, Y = 0 },
                     ref _rect);
             }
@@ -168,10 +144,14 @@ namespace ConsoleFrameBuffer {
         /// </summary>
         /// <param name="src">Buffer frame to be copied.</param>
         /// <param name="dest">Buffer frame that will be copied over by the source buffer frame.</param>
-        public static void CopyBuffer(FrameBuffer src, FrameBuffer dest) {
-            for (int i = 0; i < src._buffer.Length; i++)
+        public static void CopyBuffer(RootFrameBuffer src, RootFrameBuffer dest) {
+            if (src == null || dest == null) return;
+            if (src._buffer == null || dest._buffer == null) return;
+
+            for (int i = 0; i < src._buffer.Length; i++) {
                 if (src._buffer[i].Char.AsciiChar > 0)
                     dest._buffer[i + src._bufferwidth * src.Y] = src._buffer[i];
+            }
         }
 
         /// <summary>
@@ -185,7 +165,7 @@ namespace ConsoleFrameBuffer {
         }
 
         private void updateBufferPos() {
-            _rect = new SmallRect() {
+            _rect = new SMALL_RECT() {
                 Left = (short)X,
                 Top = (short)Y,
                 Right = (short)(_bufferwidth + X),
@@ -199,8 +179,8 @@ namespace ConsoleFrameBuffer {
         /// <param name="Width">Width of buffer frame.</param>
         /// <param name="Height">Height of buffer frame.</param>
         public void ResizeBuffer(int Width, int Height) {
-            _bufferwidth = Width;
-            _bufferheight = Height;
+            this.Width = Width;
+            this.Height = Height;
 
             _buffer = new CharInfo[_bufferwidth * _bufferheight];
 
@@ -223,7 +203,8 @@ namespace ConsoleFrameBuffer {
         protected virtual void Dispose(bool disposing) {
             if (!_disposed) {
                 if (disposing) {
-                    if (_h != null) { _h.Dispose(); _h = null; }
+                    if (_hConsoleOut != null) { _hConsoleOut.Close(); _hConsoleOut.Dispose(); _hConsoleOut = null; }
+                    if (_hConsoleIn != null) { _hConsoleIn.Close(); _hConsoleIn.Dispose(); _hConsoleIn = null; }
                 }
 
                 _disposed = true;
