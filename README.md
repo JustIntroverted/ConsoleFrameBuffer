@@ -9,89 +9,75 @@ from clearing the screen.
 
 ```
 #!c#
-
-
-using System;
 using ConsoleFrameBuffer;
+using System;
 
-namespace ProjectName {
+namespace YourProject {
 
-	class Program {
-		
-		// simple bool varible for the loop
-        private bool _running = true;
-		
-		// width and height for the buffer frame 
+    internal class Program {
+
+        // width and height for the buffer frame
         private const int _width = 80;
-        private const int _height = 50;
 
-		// create new buffer frame
-        private FrameBuffer _rootBuffer = new FrameBuffer(0, 0, _width, _height);
+        private const int _height = 25;
 
-		// variable to hold what key has been pressed
-        private ConsoleKeyInfo _keyPressed;
+        // create new buffer frame
+        private RootFrameBuffer _rootBuffer = new RootFrameBuffer(0, 0, _width, _height);
 
-		// player variables
+        // player variables
         private int _playerX = 0;
-		private int _playerY = 0;
-		private string _playerID = "@";
+
+        private int _playerY = 0;
+        private string _playerID = "@";
 
         public Program() {
-			// simple loop that calls Update() and Render()
-            while (_running) {
-                Update();
-                Render();
-            }
+            // create the events for the buffer
+            _rootBuffer.Update_Event += _rootBuffer_Update_Event;
+            _rootBuffer.Render_Event += _rootBuffer_Render_Event;
+            _rootBuffer.KeyPressed_Event += _rootBuffer_KeyPressed_Event;
 
-			// clears the console window after _running = false
-			// only really needed if you're running the exe
-			// through another console type and want to clear
-			// the screen after exit
+            // run the buffer's update and render events in a loop
+            _rootBuffer.Run();
+
+            // clears the console window after running Stop()
+            // only really needed if you're running the exe
+            // through another console and want to clear
+            // the screen after exit
             Console.Clear();
         }
-		
-		private void Update() {		
-            if (Console.KeyAvailable) {
-                _keyPressed = Console.ReadKey(true);
 
-				// moves the buffer frame around the screen
-                if (_keyPressed.Key == ConsoleKey.UpArrow)
-                    _rootBuffer.Y--;
-                if (_keyPressed.Key == ConsoleKey.DownArrow)
-                    _rootBuffer.Y++;
-                if (_keyPressed.Key == ConsoleKey.LeftArrow)
-                    _rootBuffer.X--;
-                if (_keyPressed.Key == ConsoleKey.RightArrow)
-                    _rootBuffer.X++;
+        private void _rootBuffer_KeyPressed_Event(VirtualKeys KeyPressed, ControlKeyState KeyModifiers) {
+            // moves the "@" around the screen
+            if (KeyPressed == VirtualKeys.W)
+                _playerY--;
+            if (KeyPressed == VirtualKeys.D)
+                _playerX++;
+            if (KeyPressed == VirtualKeys.S)
+                _playerY++;
+            if (KeyPressed == VirtualKeys.A)
+                _playerX--;
 
-				// moves the "@" around the screen
-                if (_keyPressed.Key == ConsoleKey.W)
-                    _playerY--;
-                if (_keyPressed.Key == ConsoleKey.D)
-                    _playerX++;
-                if (_keyPressed.Key == ConsoleKey.S)
-                    _playerY++;
-                if (_keyPressed.Key == ConsoleKey.A)
-                    _playerX--;
+            // ends the program
+            if (KeyPressed == VirtualKeys.Escape)
+                _rootBuffer.Stop();
+        }
 
-				// ends the program
-                if (_keyPressed.Key == ConsoleKey.Escape)
-                    _running = false;
-            }
-		}
-		
-		private void Render() {
-			// clear the buffer frame
-			_rootBuffer.Clear();
-			
-			// write the player data to the buffer frame
+        private void _rootBuffer_Update_Event() {
+            // maybe some game logic here?
+        }
+
+        private void _rootBuffer_Render_Event() {
+            // clear the buffer frame
+            _rootBuffer.Clear();
+
+            // write the player data to the buffer frame
             _rootBuffer.Write(_playerX, _playerY, _playerID, ConsoleColor.Cyan);
-			
-			// finally, write the buffer frame to the console window
-			_rootBuffer.WriteBuffer();
-		}
-		
-		private static void Main(string[] args) {
+
+            // finally, draw/write the buffer frame to the console window
+            _rootBuffer.WriteBuffer();
+        }
+
+        private static void Main(string[] args) {
             Console.Title = "New Console Game Project!";
 
             Console.BufferWidth = _width;
@@ -103,6 +89,6 @@ namespace ProjectName {
 
             Program prog = new Program();
         }
-	}
+    }
 }
 ```
