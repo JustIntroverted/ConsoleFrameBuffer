@@ -19,10 +19,8 @@ namespace ConsoleFrameBuffer.Test {
 
         private RootFrameBuffer _rootBuffer = new RootFrameBuffer(0, 0, _width, _height);
         private RootFrameBuffer _bufferStats = new RootFrameBuffer(0, 0, _width, 5);
-        private RootFrameBuffer _bufferMap = new RootFrameBuffer(0, 5, _width, _height - 10);
+        private RootFrameBuffer _bufferMap = new RootFrameBuffer(0, 5, _width, _height - 11);
         private RootFrameBuffer _bufferLogs = new RootFrameBuffer(0, _height - 6, _width, 5);
-
-        //private ConsoleKeyInfo _keyPressed;
 
         private string _playerName = string.Empty;
         private Point _player = new Point();
@@ -74,6 +72,7 @@ namespace ConsoleFrameBuffer.Test {
 
             _bufferMap.Dispose();
             _bufferStats.Dispose();
+            _bufferLogs.Dispose();
             _rootBuffer.Dispose();
 
             Console.Clear();
@@ -104,13 +103,40 @@ namespace ConsoleFrameBuffer.Test {
                 _caveMap.IsWalkable(_player.X - 1, _player.Y))
                 _player.X--;
 
-            if (KeyModifers == ControlKeyState.ShiftPressed &&
-                KeyPressed == VirtualKeys.OEMPeriod) {
-                if (_caveMap.DownFloor == _player) {
+            if (KeyModifers == ControlKeyState.ShiftPressed) {
+                // KEY: SHIFT + >
+                if (KeyPressed == VirtualKeys.OEMPeriod) {
+                    if (_caveMap.DownFloor == _player) {
+                        using (RootFrameBuffer frame = new RootFrameBuffer(5, 10, 50, 3)) {
+                            string ans = string.Empty;
+
+                            frame.Write(1, 1, "Do you wish to drop down a floor? yes/no", ConsoleColor.White, ConsoleColor.Black, true);
+                            frame.WriteBuffer();
+
+                            frame.SetCursorPosition(1, frame.Height - 1);
+
+                            ans = frame.ReadLine().Trim().ToLower();
+
+                            if (ans == "yes") {
+                                frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
+                                frame.WriteBuffer();
+
+                                _caveMap.Generate(500, 100);
+                                _player = _caveMap.StartPos;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (KeyModifers == ControlKeyState.LeftCtrlPressed ||
+                KeyModifers == ControlKeyState.RightCtrlPressed) {
+                // KEYS: CTRL + Q
+                if (KeyPressed == VirtualKeys.Q) {
                     using (RootFrameBuffer frame = new RootFrameBuffer(5, 10, 50, 3)) {
                         string ans = string.Empty;
 
-                        frame.Write(1, 1, "Do you wish to drop down a floor? yes/no", ConsoleColor.White, ConsoleColor.Black, true);
+                        frame.Write(1, 1, "Are you sure you want to quit? yes/no", ConsoleColor.White, ConsoleColor.Black, true);
                         frame.WriteBuffer();
 
                         frame.SetCursorPosition(1, frame.Height - 1);
@@ -118,11 +144,7 @@ namespace ConsoleFrameBuffer.Test {
                         ans = frame.ReadLine().Trim().ToLower();
 
                         if (ans == "yes") {
-                            frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
-                            frame.WriteBuffer();
-
-                            _caveMap.Generate(500, 100);
-                            _player = _caveMap.StartPos;
+                            _rootBuffer.Stop();
                         }
                     }
                 }

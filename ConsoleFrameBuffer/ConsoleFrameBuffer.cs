@@ -274,6 +274,9 @@ namespace ConsoleFrameBuffer {
             _buffer = new CharInfo[_bufferwidth * _bufferheight];
         }
 
+        /// <summary>
+        /// Runs the Render and Update methods in a loop.
+        /// </summary>
         public void Run() {
             _running = true;
 
@@ -281,8 +284,13 @@ namespace ConsoleFrameBuffer {
                 Update_Event();
                 Render_Event();
             }
+
+            Dispose();
         }
 
+        /// <summary>
+        /// Stops the loop.
+        /// </summary>
         public void Stop() {
             _running = false;
         }
