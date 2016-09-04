@@ -148,6 +148,14 @@ namespace ConsoleFrameBuffer.API {
         public uint bSetFocus;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CONSOLE_READCONSOLE_CONTROL {
+        public ulong nLength;
+        public ulong nInitialChars;
+        public ulong dwCtrlWakeupMask;
+        public ulong dwControlKeyState;
+    }
+
     public enum VirtualKeys
         : ushort {
 
@@ -797,7 +805,7 @@ namespace ConsoleFrameBuffer.API {
             [Out] StringBuilder lpBuffer,
             [MarshalAs(UnmanagedType.U4)] uint nNumberOfCharsToRead,
             [MarshalAs(UnmanagedType.U4)] out uint lpNumberOfCharsRead,
-            IntPtr lpReserved);
+            IntPtr pInputControl);
 
         [DllImport("kernel32.dll")]
         public static extern bool GetNumberOfConsoleInputEvents(

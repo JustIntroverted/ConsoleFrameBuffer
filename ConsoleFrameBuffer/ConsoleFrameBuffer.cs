@@ -48,7 +48,6 @@ namespace ConsoleFrameBuffer {
         private SafeFileHandle _hConsoleOut;
         private SafeFileHandle _hConsoleIn;
         private CharInfo[] _buffer;
-        private StringBuilder _read = new StringBuilder();
         private SMALL_RECT _rect;
 
         // TODO 5: create a method to insure the handles are good to go
@@ -60,14 +59,6 @@ namespace ConsoleFrameBuffer {
             // grabs the handle for the console window
             _hConsoleOut = APICall.CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
             _hConsoleIn = APICall.CreateFile("CONIN$", 0x80000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
-
-            //uint consoleMode;
-            //APICall.GetConsoleMode(_hConsoleIn, out consoleMode);
-
-            //consoleMode &= ~(uint)(ConsoleModes.ENABLE_ECHO_INPUT | ConsoleModes.ENABLE_LINE_INPUT);
-            //consoleMode |= ~(uint)ConsoleModes.ENABLE_WINDOW_INPUT;
-
-            //APICall.SetConsoleMode(_hConsoleIn, consoleMode);
 
             this.X = X;
             this.Y = Y;
@@ -132,13 +123,17 @@ namespace ConsoleFrameBuffer {
                 SetCursorPosition(x, y);
         }
 
+        /// <summary>
+        /// Reads the first character from the input.
+        /// </summary>
+        /// <returns>Returns the first character of the string inputed.</returns>
         public string Read() {
+            StringBuilder sb = new StringBuilder();
             uint read = 0;
 
-            //if (APICall.ReadConsoleInput(_hConsoleIn, ir, 1, out read)) {
-            //    //return read.ToString();
-            //    Console.Title = read.ToString();
-            //}
+            if (APICall.ReadConsole(_hConsoleIn, sb, 1, out read, IntPtr.Zero)) {
+                return sb.ToString(0, (int)read);
+            }
 
             return string.Empty;
         }
@@ -148,10 +143,11 @@ namespace ConsoleFrameBuffer {
         /// </summary>
         /// <returns>Returns input as a string.</returns>
         public string ReadLine() {
+            StringBuilder sb = new StringBuilder();
             uint read = 0;
 
-            if (APICall.ReadConsole(_hConsoleIn, _read, 256, out read, IntPtr.Zero)) {
-                return _read.ToString(0, (int)read - 1);
+            if (APICall.ReadConsole(_hConsoleIn, sb, 256, out read, IntPtr.Zero)) {
+                return sb.ToString(0, (int)read - 1);
             }
 
             return string.Empty;
@@ -193,6 +189,7 @@ namespace ConsoleFrameBuffer {
 
                     switch (eventBuffer[i].EventType) {
                         case EventType.KEY_EVENT:
+                            if (KeyPressed_Event == null) return;
 
                             if (eventBuffer[i].KeyEvent.bKeyDown)
                                 KeyPressed_Event(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
@@ -207,8 +204,6 @@ namespace ConsoleFrameBuffer {
                     }
                 }
             }
-
-            //APICall.FlushConsoleInputBuffer(_hConsoleIn);
 
             // if the handle is valid, then go ahead and write to the console
             if (_hConsoleOut != null && !_hConsoleOut.IsInvalid) {

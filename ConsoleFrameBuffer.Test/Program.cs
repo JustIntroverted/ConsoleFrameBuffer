@@ -49,8 +49,11 @@ namespace ConsoleFrameBuffer.Test {
                 frame.Write(0, 0, "Player Name: ", ConsoleColor.White, ConsoleColor.Black, true);
                 frame.WriteBuffer();
 
-                if (_playerName.Trim().Length == 0)
+                while (_playerName.Trim().Length == 0) {
                     _playerName = _rootBuffer.ReadLine();
+                }
+
+                Console.Title = _playerName;
 
                 frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
                 frame.WriteBuffer();
@@ -104,7 +107,7 @@ namespace ConsoleFrameBuffer.Test {
                 _player.X--;
 
             if (KeyModifers == ControlKeyState.ShiftPressed) {
-                // KEY: SHIFT + >
+                // KEY: SHIFT + . = >
                 if (KeyPressed == VirtualKeys.OEMPeriod) {
                     if (_caveMap.DownFloor == _player) {
                         using (RootFrameBuffer frame = new RootFrameBuffer(5, 10, 50, 3)) {
@@ -115,9 +118,9 @@ namespace ConsoleFrameBuffer.Test {
 
                             frame.SetCursorPosition(1, frame.Height - 1);
 
-                            ans = frame.ReadLine().Trim().ToLower();
+                            ans = frame.Read().Trim().ToLower();
 
-                            if (ans == "yes") {
+                            if (ans == "y") {
                                 frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
                                 frame.WriteBuffer();
 
@@ -141,9 +144,9 @@ namespace ConsoleFrameBuffer.Test {
 
                         frame.SetCursorPosition(1, frame.Height - 1);
 
-                        ans = frame.ReadLine().Trim().ToLower();
+                        ans = frame.Read().Trim().ToLower();
 
-                        if (ans == "yes") {
+                        if (ans == "y") {
                             _rootBuffer.Stop();
                         }
                     }
@@ -220,8 +223,6 @@ namespace ConsoleFrameBuffer.Test {
             _frames++;
         }
 
-        private int _colortick = 0;
-
         private void DrawMap() {
             for (int x = 0; x < _bufferMap.Width; x++) {
                 for (int y = 0; y < _bufferMap.Height; y++) {
@@ -236,20 +237,16 @@ namespace ConsoleFrameBuffer.Test {
                     }
                 }
             }
-
-            _colortick++;
         }
 
         private void addLog(string log) {
             _logs.Insert(0, log);
         }
 
-        private int _maxLogsDisplayed = 5;
-
         private void writeLogs() {
-            for (int i = 0; i < _maxLogsDisplayed; i++) {
+            for (int i = 0; i < _bufferLogs.Height; i++) {
                 if (i < _logs.Count)
-                    _bufferLogs.Write(1, (_maxLogsDisplayed - 1) - i, _logs[i], ConsoleColor.White);
+                    _bufferLogs.Write(1, (_bufferLogs.Height - 1) - i, _logs[i], ConsoleColor.White);
             }
         }
 
