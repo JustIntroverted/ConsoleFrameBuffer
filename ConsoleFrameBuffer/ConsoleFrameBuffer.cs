@@ -23,7 +23,9 @@ namespace ConsoleFrameBuffer {
 
         public event MouseMove MouseMove_Event;
 
-        public delegate void MouseDown(ushort Button);
+        public delegate void MouseDown(int X, int Y, VirtualKeys ButtonState);
+
+        public event MouseDown MouseDown_Event;
 
         public delegate void KeyPressed(VirtualKeys KeyPressed, ControlKeyState KeyModifiers);
 
@@ -171,40 +173,6 @@ namespace ConsoleFrameBuffer {
         /// Draws the buffer frame to the console window.
         /// </summary>
         public void WriteBuffer() {
-            uint read = 0;
-            uint readEvents = 0;
-
-            if (APICall.GetNumberOfConsoleInputEvents(_hConsoleIn, out read) && read > 0) {
-                INPUT_RECORD[] eventBuffer = new INPUT_RECORD[read];
-
-                APICall.ReadConsoleInput(_hConsoleIn, eventBuffer, read, out readEvents);
-
-                for (int i = 0; i < readEvents; i++) {
-                    ControlKeyState conState = eventBuffer[i].KeyEvent.dwControlKeyState;
-                    conState &= ~(
-                        ControlKeyState.NumLockOn |
-                        ControlKeyState.ScrollLockOn |
-                        ControlKeyState.CapsLockOn
-                        );
-
-                    switch (eventBuffer[i].EventType) {
-                        case EventType.KEY_EVENT:
-                            if (KeyPressed_Event == null) return;
-
-                            if (eventBuffer[i].KeyEvent.bKeyDown)
-                                KeyPressed_Event(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
-                            else
-                                KeyReleased_Event(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
-                            break;
-
-                        case EventType.MOUSE_EVENT:
-                            if (MouseMove_Event != null)
-                                MouseMove_Event(eventBuffer[i].MouseEvent.dwMousePosition.X, eventBuffer[i].MouseEvent.dwMousePosition.Y);
-                            break;
-                    }
-                }
-            }
-
             // if the handle is valid, then go ahead and write to the console
             if (_hConsoleOut != null && !_hConsoleOut.IsInvalid) {
                 bool b = APICall.WriteConsoleOutput(_hConsoleOut, _buffer,
@@ -273,14 +241,73 @@ namespace ConsoleFrameBuffer {
         /// Runs the Render and Update methods in a loop.
         /// </summary>
         public void Run() {
+            if (Update_Event == null || Render_Event == null) {
+                return;
+            }
+
             _running = true;
 
             while (_running) {
+                getInput();
                 Update_Event();
                 Render_Event();
             }
 
             Dispose();
+        }
+
+        private void getInput() {
+            // make sure we don't capture input if they don't use the built in events
+            if (KeyPressed_Event == null && KeyReleased_Event == null &&
+                MouseMove_Event == null && MouseDown_Event == null) {
+                return;
+            }
+
+            uint read = 0;
+            uint readEvents = 0;
+
+            if (APICall.GetNumberOfConsoleInputEvents(_hConsoleIn, out read) && read > 0) {
+                INPUT_RECORD[] eventBuffer = new INPUT_RECORD[read];
+
+                APICall.ReadConsoleInput(_hConsoleIn, eventBuffer, read, out readEvents);
+
+                for (int i = 0; i < readEvents; i++) {
+                    ControlKeyState conState = eventBuffer[i].KeyEvent.dwControlKeyState;
+                    conState &= ~(
+                        ControlKeyState.NumLockOn |
+                        ControlKeyState.ScrollLockOn |
+                        ControlKeyState.CapsLockOn);
+
+                    switch (eventBuffer[i].EventType) {
+                        case EventType.KEY_EVENT:
+                            if (eventBuffer[i].KeyEvent.bKeyDown) {
+                                if (KeyPressed_Event == null) return;
+
+                                KeyPressed_Event(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
+                            } else {
+                                if (KeyReleased_Event == null) return;
+
+                                KeyReleased_Event(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
+                            }
+                            break;
+
+                        case EventType.MOUSE_EVENT:
+                            if (MouseMove_Event == null) return;
+
+                            MouseMove_Event(eventBuffer[i].MouseEvent.dwMousePosition.X, eventBuffer[i].MouseEvent.dwMousePosition.Y);
+
+                            if (eventBuffer[i].MouseEvent.dwButtonState > 0) {
+                                if (MouseDown_Event == null) return;
+
+                                MouseDown_Event(
+                                    eventBuffer[i].MouseEvent.dwMousePosition.X,
+                                    eventBuffer[i].MouseEvent.dwMousePosition.Y,
+                                    eventBuffer[i].MouseEvent.dwButtonState);
+                            }
+                            break;
+                    }
+                }
+            }
         }
 
         /// <summary>

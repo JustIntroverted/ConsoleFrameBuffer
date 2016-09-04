@@ -44,6 +44,7 @@ namespace ConsoleFrameBuffer.Test {
             _rootBuffer.KeyPressed_Event += _rootBuffer_KeyPressed_Event;
             _rootBuffer.KeyReleased_Event += _rootBuffer_KeyReleased_Event;
             _rootBuffer.MouseMove_Event += _rootBuffer_MouseMove_Event;
+            _rootBuffer.MouseDown_Event += _rootBuffer_MouseDown_Event;
 
             using (RootFrameBuffer frame = new RootFrameBuffer(0, 0, 30, 1)) {
                 frame.Write(0, 0, "Player Name: ", ConsoleColor.White, ConsoleColor.Black, true);
@@ -79,6 +80,21 @@ namespace ConsoleFrameBuffer.Test {
             _rootBuffer.Dispose();
 
             Console.Clear();
+        }
+
+        private void _rootBuffer_MouseDown_Event(int X, int Y, VirtualKeys ButtonState) {
+            addLog(string.Format("MouseButton Down: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
+
+            int mousePosMapX = X + _playerCamera.X;
+            int mousePosMapY = Y + _playerCamera.Y - 5;
+            if (!_caveMap.IsOutOfBounds(mousePosMapX, mousePosMapY)) {
+                Tile tmpTile = _caveMap.Tiles[mousePosMapX, mousePosMapY];
+
+                string tileDetails = string.Format("ID: {0}, Walkable: {1}, Wall: {2}, IsVisible: {3}, IsExplored: {4}",
+                    tmpTile.ID, tmpTile.Walkable, tmpTile.Wall, tmpTile.IsVisible, tmpTile.IsExplored);
+
+                addLog(tileDetails);
+            }
         }
 
         private void _rootBuffer_KeyReleased_Event(VirtualKeys KeyReleased, ControlKeyState KeyModifers) {

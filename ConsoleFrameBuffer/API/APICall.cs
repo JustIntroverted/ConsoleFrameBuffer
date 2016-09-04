@@ -120,7 +120,7 @@ namespace ConsoleFrameBuffer.API {
         public Coord dwMousePosition;
 
         [FieldOffset(4)]
-        public uint dwButtonState;
+        public VirtualKeys dwButtonState;
 
         [FieldOffset(8)]
         public uint dwControlKeyState;
