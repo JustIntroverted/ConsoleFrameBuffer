@@ -9,6 +9,30 @@ namespace ConsoleFrameBuffer {
     public class RootFrameBuffer : IDisposable {
         private bool _disposed = false;
 
+        private bool _running = false;
+
+        public delegate void Update();
+
+        public event Update Update_Event;
+
+        public delegate void Render();
+
+        public event Render Render_Event;
+
+        public delegate void MouseMove(int X, int Y);
+
+        public event MouseMove MouseMove_Event;
+
+        public delegate void MouseDown(ushort Button);
+
+        public delegate void KeyPressed(VirtualKeys KeyPressed, ControlKeyState KeyModifiers);
+
+        public event KeyPressed KeyPressed_Event;
+
+        public delegate void KeyReleased(VirtualKeys KeyReleased, ControlKeyState KeyModifiers);
+
+        public event KeyReleased KeyReleased_Event;
+
         public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
         public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
         public int CursorX { get; set; }
@@ -27,6 +51,8 @@ namespace ConsoleFrameBuffer {
         private StringBuilder _read = new StringBuilder();
         private SMALL_RECT _rect;
 
+        // TODO 5: create a method to insure the handles are good to go
+
         public RootFrameBuffer() : this(0, 0, 80, 25) {
         }
 
@@ -34,6 +60,14 @@ namespace ConsoleFrameBuffer {
             // grabs the handle for the console window
             _hConsoleOut = APICall.CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
             _hConsoleIn = APICall.CreateFile("CONIN$", 0x80000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+
+            //uint consoleMode;
+            //APICall.GetConsoleMode(_hConsoleIn, out consoleMode);
+
+            //consoleMode &= ~(uint)(ConsoleModes.ENABLE_ECHO_INPUT | ConsoleModes.ENABLE_LINE_INPUT);
+            //consoleMode |= ~(uint)ConsoleModes.ENABLE_WINDOW_INPUT;
+
+            //APICall.SetConsoleMode(_hConsoleIn, consoleMode);
 
             this.X = X;
             this.Y = Y;
@@ -98,8 +132,19 @@ namespace ConsoleFrameBuffer {
                 SetCursorPosition(x, y);
         }
 
+        public string Read() {
+            uint read = 0;
+
+            //if (APICall.ReadConsoleInput(_hConsoleIn, ir, 1, out read)) {
+            //    //return read.ToString();
+            //    Console.Title = read.ToString();
+            //}
+
+            return string.Empty;
+        }
+
         /// <summary>
-        /// Reads the current keyboard input.
+        /// Reads input until ended.
         /// </summary>
         /// <returns>Returns input as a string.</returns>
         public string ReadLine() {
@@ -130,6 +175,41 @@ namespace ConsoleFrameBuffer {
         /// Draws the buffer frame to the console window.
         /// </summary>
         public void WriteBuffer() {
+            uint read = 0;
+            uint readEvents = 0;
+
+            if (APICall.GetNumberOfConsoleInputEvents(_hConsoleIn, out read) && read > 0) {
+                INPUT_RECORD[] eventBuffer = new INPUT_RECORD[read];
+
+                APICall.ReadConsoleInput(_hConsoleIn, eventBuffer, read, out readEvents);
+
+                for (int i = 0; i < readEvents; i++) {
+                    ControlKeyState conState = eventBuffer[i].KeyEvent.dwControlKeyState;
+                    conState &= ~(
+                        ControlKeyState.NumLockOn |
+                        ControlKeyState.ScrollLockOn |
+                        ControlKeyState.CapsLockOn
+                        );
+
+                    switch (eventBuffer[i].EventType) {
+                        case EventType.KEY_EVENT:
+
+                            if (eventBuffer[i].KeyEvent.bKeyDown)
+                                KeyPressed_Event(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
+                            else
+                                KeyReleased_Event(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
+                            break;
+
+                        case EventType.MOUSE_EVENT:
+                            if (MouseMove_Event != null)
+                                MouseMove_Event(eventBuffer[i].MouseEvent.dwMousePosition.X, eventBuffer[i].MouseEvent.dwMousePosition.Y);
+                            break;
+                    }
+                }
+            }
+
+            //APICall.FlushConsoleInputBuffer(_hConsoleIn);
+
             // if the handle is valid, then go ahead and write to the console
             if (_hConsoleOut != null && !_hConsoleOut.IsInvalid) {
                 bool b = APICall.WriteConsoleOutput(_hConsoleOut, _buffer,
@@ -192,6 +272,19 @@ namespace ConsoleFrameBuffer {
         /// </summary>
         public void Clear() {
             _buffer = new CharInfo[_bufferwidth * _bufferheight];
+        }
+
+        public void Run() {
+            _running = true;
+
+            while (_running) {
+                Update_Event();
+                Render_Event();
+            }
+        }
+
+        public void Stop() {
+            _running = false;
         }
 
         public void Dispose() {

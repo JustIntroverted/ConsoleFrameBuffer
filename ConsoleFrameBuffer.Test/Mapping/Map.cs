@@ -48,7 +48,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
             }
         }
 
-        // TODO: ResetMapVisibility - eh, kind of reusing code, but whatevs
+        // TODO 9: ResetMapVisibility - eh, kind of reusing code, but whatevs
         private void ResetMapVisibility(Point point) {
             for (int i = 0; i < 100; i++) {
                 float x, y;
