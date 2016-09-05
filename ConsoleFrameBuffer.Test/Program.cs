@@ -13,7 +13,7 @@ using System.Diagnostics;
 namespace ConsoleFrameBuffer.Test {
 
     internal class Program {
-        private static int _width = 79;
+        private static int _width = 80;
         private static int _height = 25;
 
         private RootFrameBuffer _rootBuffer = new RootFrameBuffer(0, 0, _width, _height);
@@ -42,13 +42,14 @@ namespace ConsoleFrameBuffer.Test {
 
             _rootBuffer.Update += _rootBuffer_Update;
             _rootBuffer.Render += _rootBuffer_Render;
-            _rootBuffer.KeyPressed += _rootBuffer_KeyPressed;
-            _rootBuffer.KeyReleased += _rootBuffer_KeyReleased;
-            _rootBuffer.MouseMove += _rootBuffer_MouseMove;
-            _rootBuffer.MouseDown += _rootBuffer_MouseDown;
+            _rootBuffer.Key_Pressed += _rootBuffer_Key_Pressed;
+            _rootBuffer.Key_Released += _rootBuffer_Key_Released;
+            _rootBuffer.Mouse_Moved += _rootBuffer_Mouse_Moved;
+            _rootBuffer.MouseButton_Clicked += _rootBuffer_MouseButton_Clicked;
+            _rootBuffer.MouseButton_DoubleClicked += _rootBuffer_MouseButton_DoubleClicked;
 
             using (RootFrameBuffer frame = new RootFrameBuffer(0, 0, 30, 1)) {
-                frame.Write(0, 0, "Player Name: ", ConsoleColor.White, ConsoleColor.Black, true);
+                frame.Write(0, 0, "Player Name: \r", ConsoleColor.White, ConsoleColor.Black, true);
                 frame.WriteBuffer();
 
                 while (_playerName.Trim().Length == 0) {
@@ -63,10 +64,10 @@ namespace ConsoleFrameBuffer.Test {
 
             _caveMap.Generate(500, 100);
 
-            _player.X = _caveMap.StartPos.X;
-            _player.Y = _caveMap.StartPos.Y;
+            _player.X = _caveMap.UpFloorPosition.X;
+            _player.Y = _caveMap.UpFloorPosition.Y;
 
-            _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height);
+            _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height - 5);
 
             _sample = TimeSpan.FromSeconds(1);
             _value = 0;
@@ -83,8 +84,12 @@ namespace ConsoleFrameBuffer.Test {
             Console.Clear();
         }
 
-        private void _rootBuffer_MouseDown(int X, int Y, VirtualKeys ButtonState) {
-            addLog(string.Format("MouseButton Down: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
+        private void _rootBuffer_MouseButton_DoubleClicked(int X, int Y, VirtualKeys ButtonState) {
+            addLog(string.Format("MouseButton DoubleClicked: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
+        }
+
+        private void _rootBuffer_MouseButton_Clicked(int X, int Y, VirtualKeys ButtonState) {
+            addLog(string.Format("MouseButton Clicked: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
 
             if (ButtonState == VirtualKeys.LeftButton) {
                 int mousePosMapX = X + _playerCamera.X;
@@ -93,7 +98,9 @@ namespace ConsoleFrameBuffer.Test {
                 if (!_caveMap.IsOutOfBounds(mousePosMapX, mousePosMapY)) {
                     Tile tmpTile = _caveMap.Tiles[mousePosMapX, mousePosMapY];
 
-                    string tileDetails = string.Format("ID: {0}, Walkable: {1}, Wall: {2}, IsVisible: {3}, IsExplored: {4}",
+                    if (!tmpTile.IsVisible) return;
+
+                    string tileDetails = string.Format("ID: [{0}], Walkable: {1}, Wall: {2}, IsVisible: {3}, IsExplored: {4}",
                         tmpTile.ID, tmpTile.Walkable, tmpTile.Wall, tmpTile.IsVisible, tmpTile.IsExplored);
 
                     addLog(tileDetails);
@@ -101,16 +108,16 @@ namespace ConsoleFrameBuffer.Test {
             }
         }
 
-        private void _rootBuffer_KeyReleased(VirtualKeys KeyReleased, ControlKeyState KeyModifers) {
+        private void _rootBuffer_Key_Released(VirtualKeys KeyReleased, ControlKeyState KeyModifers) {
             addLog("Key Released: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + KeyReleased.ToString()) : KeyReleased.ToString()));
         }
 
-        private void _rootBuffer_MouseMove(int X, int Y) {
+        private void _rootBuffer_Mouse_Moved(int X, int Y) {
             _mousePos.X = X;
             _mousePos.Y = Y;
         }
 
-        private void _rootBuffer_KeyPressed(VirtualKeys KeyPressed, ControlKeyState KeyModifers) {
+        private void _rootBuffer_Key_Pressed(VirtualKeys KeyPressed, ControlKeyState KeyModifers) {
             addLog("Key Pressed: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + KeyPressed.ToString()) : KeyPressed.ToString()));
 
             if (KeyPressed == VirtualKeys.W &&
@@ -134,7 +141,7 @@ namespace ConsoleFrameBuffer.Test {
             if (KeyModifers == ControlKeyState.ShiftPressed) {
                 // KEY: SHIFT + . = >
                 if (KeyPressed == VirtualKeys.OEMPeriod) {
-                    if (_caveMap.DownFloor == _player) {
+                    if (_caveMap.DownFloorPosition == _player) {
                         using (RootFrameBuffer frame = new RootFrameBuffer(5, 10, 50, 3)) {
                             string ans = string.Empty;
 
@@ -150,7 +157,7 @@ namespace ConsoleFrameBuffer.Test {
                                 frame.WriteBuffer();
 
                                 _caveMap.Generate(500, 100);
-                                _player = _caveMap.StartPos;
+                                _player = _caveMap.UpFloorPosition;
                             }
                         }
                     }
@@ -189,7 +196,7 @@ namespace ConsoleFrameBuffer.Test {
             }
 
             _caveMap.ComputeFOV(_player);
-            _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height);
+            _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height - 5);
         }
 
         private void _rootBuffer_Render() {
@@ -263,8 +270,6 @@ namespace ConsoleFrameBuffer.Test {
 
         private static void Main(string[] args) {
             Console.Title = "ConsoleFrameBuffer.Test";
-
-            //Console.CursorVisible = false;
 
             Program prog = new Program();
         }

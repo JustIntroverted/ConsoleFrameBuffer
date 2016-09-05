@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 
 namespace ConsoleFrameBuffer {
 
@@ -41,6 +42,12 @@ namespace ConsoleFrameBuffer {
         MENU_EVENT = 0x0008,
         MOUSE_EVENT = 0x0002,
         WINDOW_BUFFER_SIZE_EVENT = 0x0004
+    }
+
+    public enum MouseEventType : uint {
+        MOUSE_MOVED = 0x0001,
+        DOUBLE_CLICK = 0x0002,
+        MOUSE_WHEELED = 0x0004  // doesnt seem to work unfortunately
     }
 
     public enum VirtualKeys
@@ -744,10 +751,10 @@ namespace ConsoleFrameBuffer {
         public VirtualKeys dwButtonState;
 
         [FieldOffset(8)]
-        public uint dwControlKeyState;
+        public ControlKeyState dwControlKeyState;
 
         [FieldOffset(12)]
-        public uint dwEventFlags;
+        public MouseEventType dwEventFlags;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -775,12 +782,11 @@ namespace ConsoleFrameBuffer {
         private short _bufferwidth;
         private Coord _cursorPosition;
         private bool _disposed = false;
-
         private SafeFileHandle _hConsoleIn;
         private SafeFileHandle _hConsoleOut;
         private SMALL_RECT _rect;
         private bool _running = false;
-
+        private int _tabStop;
         private short _x;
 
         private short _y;
@@ -813,21 +819,25 @@ namespace ConsoleFrameBuffer {
 
         public delegate void KeyReleasedDelegate(VirtualKeys KeyReleased, ControlKeyState KeyModifiers);
 
-        public delegate void MouseDownDelegate(int X, int Y, VirtualKeys ButtonState);
+        public delegate void MouseButtonDoubleClickedDelegate(int X, int Y, VirtualKeys ButtonState);
 
-        public delegate void MouseMoveDelegate(int X, int Y);
+        public delegate void MouseButtonClickedDelegate(int X, int Y, VirtualKeys ButtonState);
+
+        public delegate void MouseMovedDelegate(int X, int Y);
 
         public delegate void RenderDelegate();
 
         public delegate void UpdateDelegate();
 
-        public event KeyPressedDelegate KeyPressed;
+        public event KeyPressedDelegate Key_Pressed;
 
-        public event KeyReleasedDelegate KeyReleased;
+        public event KeyReleasedDelegate Key_Released;
 
-        public event MouseDownDelegate MouseDown;
+        public event MouseButtonDoubleClickedDelegate MouseButton_DoubleClicked;
 
-        public event MouseMoveDelegate MouseMove;
+        public event MouseButtonClickedDelegate MouseButton_Clicked;
+
+        public event MouseMovedDelegate Mouse_Moved;
 
         public event RenderDelegate Render;
 
@@ -927,6 +937,8 @@ namespace ConsoleFrameBuffer {
                 getInput();
                 Update();
                 Render();
+
+                Thread.Sleep(0);
             }
 
             Dispose();
@@ -997,7 +1009,7 @@ namespace ConsoleFrameBuffer {
                     case '\n': y++; break;
 
                     // carriage return
-                    case '\r': x = 0; break;
+                    case '\r': x = 0; y++; break;
 
                     // tab
                     case '\t': x += 5; break;
@@ -1054,8 +1066,9 @@ namespace ConsoleFrameBuffer {
 
         private void getInput() {
             // make sure we don't capture input if they don't use the built in events
-            if (KeyPressed == null && KeyReleased == null &&
-                MouseMove == null && MouseDown == null) {
+            if (Key_Pressed == null && Key_Released == null &&
+                Mouse_Moved == null && MouseButton_Clicked == null &&
+                MouseButton_DoubleClicked == null) {
                 return;
             }
 
@@ -1077,28 +1090,39 @@ namespace ConsoleFrameBuffer {
                     switch (eventBuffer[i].EventType) {
                         case EventType.KEY_EVENT:
                             if (eventBuffer[i].KeyEvent.bKeyDown) {
-                                if (KeyPressed == null) return;
-
-                                KeyPressed(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
+                                if (Key_Pressed != null) {
+                                    Key_Pressed(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
+                                }
                             } else {
-                                if (KeyReleased == null) return;
-
-                                KeyReleased(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
+                                if (Key_Released != null) {
+                                    Key_Released(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
+                                }
                             }
                             break;
 
                         case EventType.MOUSE_EVENT:
-                            if (MouseMove == null) return;
-
-                            MouseMove(eventBuffer[i].MouseEvent.dwMousePosition.X, eventBuffer[i].MouseEvent.dwMousePosition.Y);
+                            if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.MOUSE_MOVED) {
+                                if (Mouse_Moved != null) {
+                                    Mouse_Moved(eventBuffer[i].MouseEvent.dwMousePosition.X, eventBuffer[i].MouseEvent.dwMousePosition.Y);
+                                }
+                            }
 
                             if (eventBuffer[i].MouseEvent.dwButtonState > 0) {
-                                if (MouseDown == null) return;
-
-                                MouseDown(
-                                    eventBuffer[i].MouseEvent.dwMousePosition.X,
-                                    eventBuffer[i].MouseEvent.dwMousePosition.Y,
-                                    eventBuffer[i].MouseEvent.dwButtonState);
+                                if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.DOUBLE_CLICK) {
+                                    if (MouseButton_DoubleClicked != null) {
+                                        MouseButton_DoubleClicked(
+                                            eventBuffer[i].MouseEvent.dwMousePosition.X,
+                                            eventBuffer[i].MouseEvent.dwMousePosition.Y,
+                                            eventBuffer[i].MouseEvent.dwButtonState);
+                                    }
+                                } else {
+                                    if (MouseButton_Clicked != null) {
+                                        MouseButton_Clicked(
+                                            eventBuffer[i].MouseEvent.dwMousePosition.X,
+                                            eventBuffer[i].MouseEvent.dwMousePosition.Y,
+                                            eventBuffer[i].MouseEvent.dwButtonState);
+                                    }
+                                }
                             }
                             break;
                     }

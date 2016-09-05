@@ -4,8 +4,8 @@ using System;
 namespace ConsoleFrameBuffer.Test.Mapping {
 
     internal class CaveMap : Map {
-        public Point StartPos;
-        public Point DownFloor;
+        public Point UpFloorPosition;
+        public Point DownFloorPosition;
 
         public override void Generate(int Width = 80, int Height = 25) {
             this.Width = Width;
@@ -35,7 +35,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
                 ConsoleColor.Black,
                 true);
 
-            StartPos = new Point(Digger.X, Digger.Y);
+            UpFloorPosition = new Point(Digger.X, Digger.Y);
 
             while (floorCount < (Width * Height) / 50) {
                 int dir = Program.RandomNumber.Next(0, 4);
@@ -89,16 +89,16 @@ namespace ConsoleFrameBuffer.Test.Mapping {
             int distance;
 
             while (true) {
-                DownFloor = new Point(Program.RandomNumber.Next(0, Width), Program.RandomNumber.Next(0, Height));
-                distance = (int)Math.Sqrt((Math.Pow(DownFloor.X - StartPos.X, 2) + Math.Pow(DownFloor.Y - StartPos.Y, 2)));
+                DownFloorPosition = new Point(Program.RandomNumber.Next(0, Width), Program.RandomNumber.Next(0, Height));
+                distance = (int)Math.Sqrt((Math.Pow(DownFloorPosition.X - UpFloorPosition.X, 2) + Math.Pow(DownFloorPosition.Y - UpFloorPosition.Y, 2)));
 
-                if (distance > 40 && IsWalkable(DownFloor.X, DownFloor.Y)) break;
+                if (distance > 25 && IsWalkable(DownFloorPosition.X, DownFloorPosition.Y)) break;
             }
 
-            Tiles[StartPos.X, StartPos.Y].ID = "<";
-            Tiles[StartPos.X, StartPos.Y].ForegroundColor = ConsoleColor.Cyan;
-            Tiles[DownFloor.X, DownFloor.Y].ID = ">";
-            Tiles[DownFloor.X, DownFloor.Y].ForegroundColor = ConsoleColor.Red;
+            Tiles[UpFloorPosition.X, UpFloorPosition.Y].ID = "<";
+            Tiles[UpFloorPosition.X, UpFloorPosition.Y].ForegroundColor = ConsoleColor.Cyan;
+            Tiles[DownFloorPosition.X, DownFloorPosition.Y].ID = ">";
+            Tiles[DownFloorPosition.X, DownFloorPosition.Y].ForegroundColor = ConsoleColor.Red;
         }
     }
 }

@@ -6,8 +6,8 @@
         private Point _currentPoint;
 
         public void FixCamera(Point p, int width, int height) {
-            X = ((p.X + 1) - (width / 2) - 1);
-            Y = ((p.Y - 1) - (height / 2) - 1);
+            X = ((p.X + 0) - (width / 2) - 1);
+            Y = ((p.Y - 2) - (height / 2) - 1);
 
             _currentPoint = p;
         }

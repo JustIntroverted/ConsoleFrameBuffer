@@ -26,7 +26,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
                 y = (float)Math.Sin((float)i);
 
                 float ox, oy;
-                int VIEW_RADIUS = 10;
+                int VIEW_RADIUS = 5;
 
                 ox = point.X + .5f;
                 oy = point.Y + .5f;
@@ -110,7 +110,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
             double slice = 2 * Math.PI / points;
 
             for (int i = 0; i < points; i++) {
-                double angle = slice * (double)i;
+                double angle = slice * i;
                 double newX = (center.X + radius * Math.Cos(angle));
                 double newY = (center.Y + radius * Math.Sin(angle));
 
