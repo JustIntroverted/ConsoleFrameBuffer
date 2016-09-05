@@ -13,29 +13,24 @@ using System.Diagnostics;
 namespace ConsoleFrameBuffer.Test {
 
     internal class Program {
-        private static int _width = 80;
+        public static Random RandomNumber = new Random();
         private static int _height = 25;
-
-        private RootFrameBuffer _rootBuffer = new RootFrameBuffer(0, 0, _width, _height);
-        private RootFrameBuffer _bufferStats = new RootFrameBuffer(0, 0, _width, 5);
-        private RootFrameBuffer _bufferMap = new RootFrameBuffer(0, 5, _width, _height - 11);
+        private static Stopwatch _sw = new Stopwatch();
+        private static int _width = 80;
         private RootFrameBuffer _bufferLogs = new RootFrameBuffer(0, _height - 6, _width, 5);
-
-        private string _playerName = string.Empty;
+        private RootFrameBuffer _bufferMap = new RootFrameBuffer(0, 5, _width, _height - 11);
+        private RootFrameBuffer _bufferStats = new RootFrameBuffer(0, 0, _width, 5);
+        private CaveMap _caveMap = new CaveMap();
+        private long _frames;
+        private List<string> _logs = new List<string>();
+        private Point _mousePos = new Point();
         private Point _player = new Point();
         private Camera _playerCamera = new Camera();
-        private Point _mousePos = new Point();
-
-        private CaveMap _caveMap = new CaveMap();
-        private Array colors = Enum.GetValues(typeof(ConsoleColor));
-
-        public static Random RandomNumber = new Random();
-        private static Stopwatch _sw = new Stopwatch();
-        private long _frames;
-        private float _value;
+        private string _playerName = string.Empty;
+        private RootFrameBuffer _rootBuffer = new RootFrameBuffer(0, 0, _width, _height);
         private TimeSpan _sample;
-
-        private List<string> _logs = new List<string>();
+        private float _value;
+        private Array colors = Enum.GetValues(typeof(ConsoleColor));
 
         public Program() {
             Console.Clear();
@@ -84,37 +79,10 @@ namespace ConsoleFrameBuffer.Test {
             Console.Clear();
         }
 
-        private void _rootBuffer_MouseButton_DoubleClicked(int X, int Y, VirtualKeys ButtonState) {
-            addLog(string.Format("MouseButton DoubleClicked: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
-        }
+        private static void Main(string[] args) {
+            Console.Title = "ConsoleFrameBuffer.Test";
 
-        private void _rootBuffer_MouseButton_Clicked(int X, int Y, VirtualKeys ButtonState) {
-            addLog(string.Format("MouseButton Clicked: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
-
-            if (ButtonState == VirtualKeys.LeftButton) {
-                int mousePosMapX = X + _playerCamera.X;
-                int mousePosMapY = Y + _playerCamera.Y - 5;
-
-                if (!_caveMap.IsOutOfBounds(mousePosMapX, mousePosMapY)) {
-                    Tile tmpTile = _caveMap.Tiles[mousePosMapX, mousePosMapY];
-
-                    if (!tmpTile.IsVisible) return;
-
-                    string tileDetails = string.Format("ID: [{0}], Walkable: {1}, Wall: {2}, IsVisible: {3}, IsExplored: {4}",
-                        tmpTile.ID, tmpTile.Walkable, tmpTile.Wall, tmpTile.IsVisible, tmpTile.IsExplored);
-
-                    addLog(tileDetails);
-                }
-            }
-        }
-
-        private void _rootBuffer_Key_Released(VirtualKeys KeyReleased, ControlKeyState KeyModifers) {
-            addLog("Key Released: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + KeyReleased.ToString()) : KeyReleased.ToString()));
-        }
-
-        private void _rootBuffer_Mouse_Moved(int X, int Y) {
-            _mousePos.X = X;
-            _mousePos.Y = Y;
+            Program prog = new Program();
         }
 
         private void _rootBuffer_Key_Pressed(VirtualKeys KeyPressed, ControlKeyState KeyModifers) {
@@ -186,17 +154,37 @@ namespace ConsoleFrameBuffer.Test {
             }
         }
 
-        private void _rootBuffer_Update() {
-            if (_sw.Elapsed > _sample) {
-                _value = (float)(_frames / _sw.Elapsed.TotalSeconds);
+        private void _rootBuffer_Key_Released(VirtualKeys KeyReleased, ControlKeyState KeyModifers) {
+            addLog("Key Released: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + KeyReleased.ToString()) : KeyReleased.ToString()));
+        }
 
-                _sw.Reset();
-                _sw.Start();
-                _frames = 0;
+        private void _rootBuffer_Mouse_Moved(int X, int Y) {
+            _mousePos.X = X;
+            _mousePos.Y = Y;
+        }
+
+        private void _rootBuffer_MouseButton_Clicked(int X, int Y, VirtualKeys ButtonState) {
+            addLog(string.Format("MouseButton Clicked: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
+
+            if (ButtonState == VirtualKeys.LeftButton) {
+                int mousePosMapX = X + _playerCamera.X;
+                int mousePosMapY = Y + _playerCamera.Y - 5;
+
+                if (!_caveMap.IsOutOfBounds(mousePosMapX, mousePosMapY)) {
+                    Tile tmpTile = _caveMap.Tiles[mousePosMapX, mousePosMapY];
+
+                    if (!tmpTile.IsVisible) return;
+
+                    string tileDetails = string.Format("ID: [{0}], Walkable: {1}, Wall: {2}, IsVisible: {3}, IsExplored: {4}",
+                        tmpTile.ID, tmpTile.Walkable, tmpTile.Wall, tmpTile.IsVisible, tmpTile.IsExplored);
+
+                    addLog(tileDetails);
+                }
             }
+        }
 
-            _caveMap.ComputeFOV(_player);
-            _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height - 5);
+        private void _rootBuffer_MouseButton_DoubleClicked(int X, int Y, VirtualKeys ButtonState) {
+            addLog(string.Format("MouseButton DoubleClicked: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
         }
 
         private void _rootBuffer_Render() {
@@ -237,6 +225,23 @@ namespace ConsoleFrameBuffer.Test {
             _frames++;
         }
 
+        private void _rootBuffer_Update() {
+            if (_sw.Elapsed > _sample) {
+                _value = (float)(_frames / _sw.Elapsed.TotalSeconds);
+
+                _sw.Reset();
+                _sw.Start();
+                _frames = 0;
+            }
+
+            _caveMap.ComputeFOV(_player);
+            _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height - 5);
+        }
+
+        private void addLog(string log) {
+            _logs.Insert(0, log);
+        }
+
         private void DrawMap() {
             for (int x = 0; x < _bufferMap.Width; x++) {
                 for (int y = 0; y < _bufferMap.Height; y++) {
@@ -253,8 +258,8 @@ namespace ConsoleFrameBuffer.Test {
             }
         }
 
-        private void addLog(string log) {
-            _logs.Insert(0, log);
+        private ConsoleColor RandomColor() {
+            return (ConsoleColor)colors.GetValue(RandomNumber.Next(0, colors.Length));
         }
 
         private void writeLogs() {
@@ -262,16 +267,6 @@ namespace ConsoleFrameBuffer.Test {
                 if (i < _logs.Count)
                     _bufferLogs.Write(1, (_bufferLogs.Height - 1) - i, _logs[i], ConsoleColor.White);
             }
-        }
-
-        private ConsoleColor RandomColor() {
-            return (ConsoleColor)colors.GetValue(RandomNumber.Next(0, colors.Length));
-        }
-
-        private static void Main(string[] args) {
-            Console.Title = "ConsoleFrameBuffer.Test";
-
-            Program prog = new Program();
         }
     }
 }
