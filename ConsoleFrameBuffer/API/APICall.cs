@@ -21,9 +21,48 @@ namespace ConsoleFrameBuffer.API {
             IntPtr template);
 
         [DllImport("kernel32.dll")]
+        public static extern bool FlushConsoleInputBuffer(
+            SafeFileHandle hConsoleInput);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool GetConsoleCursorInfo(
+            SafeFileHandle hConsoleOutput,
+            out CONSOLE_CURSOR_INFO lpConsoleCursorInfo);
+
+        [DllImport("kernel32.dll")]
         public static extern bool GetConsoleMode(
             SafeFileHandle hConsoleHandle,
             out uint lpMode);
+
+        [DllImport("kernel32.dll")]
+        public static extern bool GetNumberOfConsoleInputEvents(
+            SafeFileHandle hConsoleInput,
+            out uint lpcNumberOfEvents);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool ReadConsole(
+            SafeFileHandle hConsoleInput,
+            [Out] StringBuilder lpBuffer,
+            [MarshalAs(UnmanagedType.U4)] uint nNumberOfCharsToRead,
+            [MarshalAs(UnmanagedType.U4)] out uint lpNumberOfCharsRead,
+            IntPtr pInputControl);
+
+        [DllImport("kernel32.dll", EntryPoint = "ReadConsoleInputW", CharSet = CharSet.Unicode)]
+        public static extern bool ReadConsoleInput(
+            SafeFileHandle hConsoleInput,
+            [Out] INPUT_RECORD[] lpBuffer,
+            uint nLength,
+            out uint lpNumberOfEventsRead);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool SetConsoleCursorInfo(
+            SafeFileHandle hConsoleOutput,
+            [In] ref CONSOLE_CURSOR_INFO lpConsoleCursorInfo);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool SetConsoleCursorPosition(
+            SafeFileHandle hConsoleOutput,
+            Coord dwCursorPosition);
 
         [DllImport("kernel32.dll")]
         public static extern bool SetConsoleMode(
@@ -37,35 +76,6 @@ namespace ConsoleFrameBuffer.API {
             Coord dwBufferSize,
             Coord dwBufferCoord,
             ref SMALL_RECT lpWriteRegion);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool SetConsoleCursorPosition(
-            SafeFileHandle hConsoleOutput,
-            Coord dwCursorPosition);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool ReadConsole(
-            SafeFileHandle hConsoleInput,
-            [Out] StringBuilder lpBuffer,
-            [MarshalAs(UnmanagedType.U4)] uint nNumberOfCharsToRead,
-            [MarshalAs(UnmanagedType.U4)] out uint lpNumberOfCharsRead,
-            IntPtr pInputControl);
-
-        [DllImport("kernel32.dll")]
-        public static extern bool GetNumberOfConsoleInputEvents(
-            SafeFileHandle hConsoleInput,
-            out uint lpcNumberOfEvents);
-
-        [DllImport("kernel32.dll")]
-        public static extern bool FlushConsoleInputBuffer(
-            SafeFileHandle hConsoleInput);
-
-        [DllImport("kernel32.dll", EntryPoint = "ReadConsoleInputW", CharSet = CharSet.Unicode)]
-        public static extern bool ReadConsoleInput(
-            SafeFileHandle hConsoleInput,
-            [Out] INPUT_RECORD[] lpBuffer,
-            uint nLength,
-            out uint lpNumberOfEventsRead);
 
         #endregion DLL Imports
     }

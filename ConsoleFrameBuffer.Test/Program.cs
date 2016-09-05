@@ -4,7 +4,6 @@
     up using ConsoleFrameBuffer.
 */
 
-using ConsoleFrameBuffer.API;
 using ConsoleFrameBuffer.Test.Mapping;
 using ConsoleFrameBuffer.Test.Utility;
 using System;
@@ -14,7 +13,7 @@ using System.Diagnostics;
 namespace ConsoleFrameBuffer.Test {
 
     internal class Program {
-        private static int _width = 80;
+        private static int _width = 79;
         private static int _height = 25;
 
         private RootFrameBuffer _rootBuffer = new RootFrameBuffer(0, 0, _width, _height);
@@ -39,12 +38,14 @@ namespace ConsoleFrameBuffer.Test {
         private List<string> _logs = new List<string>();
 
         public Program() {
-            _rootBuffer.Update_Event += _rootBuffer_Update_Event;
-            _rootBuffer.Render_Event += _rootBuffer_Render_Event;
-            _rootBuffer.KeyPressed_Event += _rootBuffer_KeyPressed_Event;
-            _rootBuffer.KeyReleased_Event += _rootBuffer_KeyReleased_Event;
-            _rootBuffer.MouseMove_Event += _rootBuffer_MouseMove_Event;
-            _rootBuffer.MouseDown_Event += _rootBuffer_MouseDown_Event;
+            Console.Clear();
+
+            _rootBuffer.Update += _rootBuffer_Update;
+            _rootBuffer.Render += _rootBuffer_Render;
+            _rootBuffer.KeyPressed += _rootBuffer_KeyPressed;
+            _rootBuffer.KeyReleased += _rootBuffer_KeyReleased;
+            _rootBuffer.MouseMove += _rootBuffer_MouseMove;
+            _rootBuffer.MouseDown += _rootBuffer_MouseDown;
 
             using (RootFrameBuffer frame = new RootFrameBuffer(0, 0, 30, 1)) {
                 frame.Write(0, 0, "Player Name: ", ConsoleColor.White, ConsoleColor.Black, true);
@@ -82,31 +83,34 @@ namespace ConsoleFrameBuffer.Test {
             Console.Clear();
         }
 
-        private void _rootBuffer_MouseDown_Event(int X, int Y, VirtualKeys ButtonState) {
+        private void _rootBuffer_MouseDown(int X, int Y, VirtualKeys ButtonState) {
             addLog(string.Format("MouseButton Down: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
 
-            int mousePosMapX = X + _playerCamera.X;
-            int mousePosMapY = Y + _playerCamera.Y - 5;
-            if (!_caveMap.IsOutOfBounds(mousePosMapX, mousePosMapY)) {
-                Tile tmpTile = _caveMap.Tiles[mousePosMapX, mousePosMapY];
+            if (ButtonState == VirtualKeys.LeftButton) {
+                int mousePosMapX = X + _playerCamera.X;
+                int mousePosMapY = Y + _playerCamera.Y - 5;
 
-                string tileDetails = string.Format("ID: {0}, Walkable: {1}, Wall: {2}, IsVisible: {3}, IsExplored: {4}",
-                    tmpTile.ID, tmpTile.Walkable, tmpTile.Wall, tmpTile.IsVisible, tmpTile.IsExplored);
+                if (!_caveMap.IsOutOfBounds(mousePosMapX, mousePosMapY)) {
+                    Tile tmpTile = _caveMap.Tiles[mousePosMapX, mousePosMapY];
 
-                addLog(tileDetails);
+                    string tileDetails = string.Format("ID: {0}, Walkable: {1}, Wall: {2}, IsVisible: {3}, IsExplored: {4}",
+                        tmpTile.ID, tmpTile.Walkable, tmpTile.Wall, tmpTile.IsVisible, tmpTile.IsExplored);
+
+                    addLog(tileDetails);
+                }
             }
         }
 
-        private void _rootBuffer_KeyReleased_Event(VirtualKeys KeyReleased, ControlKeyState KeyModifers) {
+        private void _rootBuffer_KeyReleased(VirtualKeys KeyReleased, ControlKeyState KeyModifers) {
             addLog("Key Released: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + KeyReleased.ToString()) : KeyReleased.ToString()));
         }
 
-        private void _rootBuffer_MouseMove_Event(int X, int Y) {
+        private void _rootBuffer_MouseMove(int X, int Y) {
             _mousePos.X = X;
             _mousePos.Y = Y;
         }
 
-        private void _rootBuffer_KeyPressed_Event(VirtualKeys KeyPressed, ControlKeyState KeyModifers) {
+        private void _rootBuffer_KeyPressed(VirtualKeys KeyPressed, ControlKeyState KeyModifers) {
             addLog("Key Pressed: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + KeyPressed.ToString()) : KeyPressed.ToString()));
 
             if (KeyPressed == VirtualKeys.W &&
@@ -121,6 +125,11 @@ namespace ConsoleFrameBuffer.Test {
             if (KeyPressed == VirtualKeys.A &&
                 _caveMap.IsWalkable(_player.X - 1, _player.Y))
                 _player.X--;
+
+            if (KeyPressed == VirtualKeys.Tab) {
+                _rootBuffer.SetCursorVisibility(1, !_rootBuffer.CursorVisible);
+                addLog("Cursor Visible: " + _rootBuffer.CursorVisible.ToString());
+            }
 
             if (KeyModifers == ControlKeyState.ShiftPressed) {
                 // KEY: SHIFT + . = >
@@ -170,7 +179,7 @@ namespace ConsoleFrameBuffer.Test {
             }
         }
 
-        private void _rootBuffer_Update_Event() {
+        private void _rootBuffer_Update() {
             if (_sw.Elapsed > _sample) {
                 _value = (float)(_frames / _sw.Elapsed.TotalSeconds);
 
@@ -179,29 +188,11 @@ namespace ConsoleFrameBuffer.Test {
                 _frames = 0;
             }
 
-            // resizes frames and console settings based on console width/height
-            if (Console.WindowWidth != _width || Console.WindowHeight != _height) {
-                _width = Console.WindowWidth;
-                _height = Console.WindowHeight;
-                _rootBuffer.ResizeBuffer(_width, _height);
-                _bufferStats.ResizeBuffer(_width, 5);
-                _bufferMap.ResizeBuffer(_width, _height - 5);
-                _bufferLogs.ResizeBuffer(_width, _height - 6);
-
-                // TODO 9: fix out of range error on resize
-                if (_width >= 0 && _height >= 0) {
-                    Console.BufferWidth = _width;
-                    Console.BufferHeight = _height;
-                    Console.WindowWidth = _width;
-                    Console.WindowHeight = _height;
-                }
-            }
-
             _caveMap.ComputeFOV(_player);
             _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height);
         }
 
-        private void _rootBuffer_Render_Event() {
+        private void _rootBuffer_Render() {
             _rootBuffer.Clear();
             _bufferStats.Clear();
             _bufferMap.Clear();
@@ -272,11 +263,6 @@ namespace ConsoleFrameBuffer.Test {
 
         private static void Main(string[] args) {
             Console.Title = "ConsoleFrameBuffer.Test";
-
-            Console.BufferWidth = _width;
-            Console.BufferHeight = _height;
-            Console.WindowWidth = _width;
-            Console.WindowHeight = _height;
 
             //Console.CursorVisible = false;
 

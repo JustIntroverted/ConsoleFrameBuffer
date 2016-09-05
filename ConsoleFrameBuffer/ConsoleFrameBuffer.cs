@@ -23,66 +23,17 @@ namespace ConsoleFrameBuffer {
         ENABLE_WRAP_AT_EOL_OUTPUT = 0x0002,
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct Coord {
-        public short X;
-        public short Y;
-
-        public Coord(short X, short Y) {
-            this.X = X;
-            this.Y = Y;
-        }
-    };
-
-    [StructLayout(LayoutKind.Explicit)]
-    public struct CharUnion {
-
-        [FieldOffset(0)]
-        public char UnicodeChar;
-
-        [FieldOffset(0)]
-        public byte AsciiChar;
+    public enum ControlKeyState {
+        RightAltPressed = 0x0001,
+        LeftAltPressed = 0x0002,
+        RightCtrlPressed = 0x0004,
+        LeftCtrlPressed = 0x0008,
+        ShiftPressed = 0x0010,
+        NumLockOn = 0x0020,
+        ScrollLockOn = 0x0040,
+        CapsLockOn = 0x0080,
+        EnhancedKey = 0x0100
     }
-
-    [StructLayout(LayoutKind.Explicit)]
-    public struct CharInfo {
-
-        [FieldOffset(0)]
-        public CharUnion Char;
-
-        [FieldOffset(2)]
-        public short Attributes;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct SMALL_RECT {
-        public short Left;
-        public short Top;
-        public short Right;
-        public short Bottom;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    public struct INPUT_RECORD {
-
-        [FieldOffset(0)]
-        public EventType EventType;
-
-        [FieldOffset(4)]
-        public KEY_EVENT_RECORD KeyEvent;
-
-        [FieldOffset(4)]
-        public MOUSE_EVENT_RECORD MouseEvent;
-
-        [FieldOffset(4)]
-        public WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
-
-        [FieldOffset(4)]
-        public MENU_EVENT_RECORD MenuEvent;
-
-        [FieldOffset(4)]
-        public FOCUS_EVENT_RECORD FocusEvent;
-    };
 
     public enum EventType : ushort {
         FOCUS_EVENT = 0x0010,
@@ -90,71 +41,6 @@ namespace ConsoleFrameBuffer {
         MENU_EVENT = 0x0008,
         MOUSE_EVENT = 0x0002,
         WINDOW_BUFFER_SIZE_EVENT = 0x0004
-    }
-
-    [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
-    public struct KEY_EVENT_RECORD {
-
-        [FieldOffset(0), MarshalAs(UnmanagedType.Bool)]
-        public bool bKeyDown;
-
-        [FieldOffset(4), MarshalAs(UnmanagedType.U2)]
-        public ushort wRepeatCount;
-
-        [FieldOffset(6), MarshalAs(UnmanagedType.U2)]
-        public VirtualKeys wVirtualKeyCode;
-
-        [FieldOffset(8), MarshalAs(UnmanagedType.U2)]
-        public ushort wVirtualScanCode;
-
-        [FieldOffset(10)]
-        public char UnicodeChar;
-
-        [FieldOffset(12), MarshalAs(UnmanagedType.U4)]
-        public ControlKeyState dwControlKeyState;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    public struct MOUSE_EVENT_RECORD {
-
-        [FieldOffset(0)]
-        public Coord dwMousePosition;
-
-        [FieldOffset(4)]
-        public VirtualKeys dwButtonState;
-
-        [FieldOffset(8)]
-        public uint dwControlKeyState;
-
-        [FieldOffset(12)]
-        public uint dwEventFlags;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct WINDOW_BUFFER_SIZE_RECORD {
-        public Coord dwSize;
-
-        public WINDOW_BUFFER_SIZE_RECORD(short x, short y) {
-            dwSize = new Coord(x, y);
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct MENU_EVENT_RECORD {
-        public uint dwCommandId;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct FOCUS_EVENT_RECORD {
-        public uint bSetFocus;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct CONSOLE_READCONSOLE_CONTROL {
-        public ulong nLength;
-        public ulong nInitialChars;
-        public ulong dwCtrlWakeupMask;
-        public ulong dwControlKeyState;
     }
 
     public enum VirtualKeys
@@ -749,74 +635,163 @@ namespace ConsoleFrameBuffer {
         OEMClear = 0xFE
     }
 
-    public enum ControlKeyState {
-        RightAltPressed = 0x0001,
-        LeftAltPressed = 0x0002,
-        RightCtrlPressed = 0x0004,
-        LeftCtrlPressed = 0x0008,
-        ShiftPressed = 0x0010,
-        NumLockOn = 0x0020,
-        ScrollLockOn = 0x0040,
-        CapsLockOn = 0x0080,
-        EnhancedKey = 0x0100
+    [StructLayout(LayoutKind.Explicit)]
+    public struct CharInfo {
+
+        [FieldOffset(0)]
+        public CharUnion Char;
+
+        [FieldOffset(2)]
+        public short Attributes;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct CharUnion {
+
+        [FieldOffset(0)]
+        public char UnicodeChar;
+
+        [FieldOffset(0)]
+        public byte AsciiChar;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CONSOLE_CURSOR_INFO {
+        public uint dwSize;
+        public bool bVisible;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CONSOLE_READCONSOLE_CONTROL {
+        public ulong nLength;
+        public ulong nInitialChars;
+        public ulong dwCtrlWakeupMask;
+        public ulong dwControlKeyState;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Coord {
+        public short X;
+        public short Y;
+
+        public Coord(short X, short Y) {
+            this.X = X;
+            this.Y = Y;
+        }
+    };
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct FOCUS_EVENT_RECORD {
+        public uint bSetFocus;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct INPUT_RECORD {
+
+        [FieldOffset(0)]
+        public EventType EventType;
+
+        [FieldOffset(4)]
+        public KEY_EVENT_RECORD KeyEvent;
+
+        [FieldOffset(4)]
+        public MOUSE_EVENT_RECORD MouseEvent;
+
+        [FieldOffset(4)]
+        public WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
+
+        [FieldOffset(4)]
+        public MENU_EVENT_RECORD MenuEvent;
+
+        [FieldOffset(4)]
+        public FOCUS_EVENT_RECORD FocusEvent;
+    };
+
+    [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
+    public struct KEY_EVENT_RECORD {
+
+        [FieldOffset(0), MarshalAs(UnmanagedType.Bool)]
+        public bool bKeyDown;
+
+        [FieldOffset(4), MarshalAs(UnmanagedType.U2)]
+        public ushort wRepeatCount;
+
+        [FieldOffset(6), MarshalAs(UnmanagedType.U2)]
+        public VirtualKeys wVirtualKeyCode;
+
+        [FieldOffset(8), MarshalAs(UnmanagedType.U2)]
+        public ushort wVirtualScanCode;
+
+        [FieldOffset(10)]
+        public char UnicodeChar;
+
+        [FieldOffset(12), MarshalAs(UnmanagedType.U4)]
+        public ControlKeyState dwControlKeyState;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MENU_EVENT_RECORD {
+        public uint dwCommandId;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct MOUSE_EVENT_RECORD {
+
+        [FieldOffset(0)]
+        public Coord dwMousePosition;
+
+        [FieldOffset(4)]
+        public VirtualKeys dwButtonState;
+
+        [FieldOffset(8)]
+        public uint dwControlKeyState;
+
+        [FieldOffset(12)]
+        public uint dwEventFlags;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SMALL_RECT {
+        public short Left;
+        public short Top;
+        public short Right;
+        public short Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct WINDOW_BUFFER_SIZE_RECORD {
+        public Coord dwSize;
+
+        public WINDOW_BUFFER_SIZE_RECORD(short x, short y) {
+            dwSize = new Coord(x, y);
+        }
     }
 
     #endregion Structs/Enums
 
     public class RootFrameBuffer : IDisposable {
+        private CharInfo[] _buffer;
+        private short _bufferheight;
+        private short _bufferwidth;
+        private Coord _cursorPosition;
         private bool _disposed = false;
 
+        private SafeFileHandle _hConsoleIn;
+        private SafeFileHandle _hConsoleOut;
+        private SMALL_RECT _rect;
         private bool _running = false;
 
-        public delegate void Update();
-
-        public event Update Update_Event;
-
-        public delegate void Render();
-
-        public event Render Render_Event;
-
-        public delegate void MouseMove(int X, int Y);
-
-        public event MouseMove MouseMove_Event;
-
-        public delegate void MouseDown(int X, int Y, VirtualKeys ButtonState);
-
-        public event MouseDown MouseDown_Event;
-
-        public delegate void KeyPressed(VirtualKeys KeyPressed, ControlKeyState KeyModifiers);
-
-        public event KeyPressed KeyPressed_Event;
-
-        public delegate void KeyReleased(VirtualKeys KeyReleased, ControlKeyState KeyModifiers);
-
-        public event KeyReleased KeyReleased_Event;
-
-        public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
-        public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
-        public int CursorX { get; set; }
-        public int CursorY { get; set; }
-        public int Width { get { return _bufferwidth; } protected set { _bufferwidth = (short)(value < 0 ? 0 : value); } }
-        public int Height { get { return _bufferheight; } protected set { _bufferheight = (short)(value < 0 ? 0 : value); } }
         private short _x;
+
         private short _y;
-        private Coord _cursorPosition;
-        private short _bufferwidth;
-        private short _bufferheight;
-
-        private SafeFileHandle _hConsoleOut;
-        private SafeFileHandle _hConsoleIn;
-        private CharInfo[] _buffer;
-        private SMALL_RECT _rect;
-
-        // TODO 5: create a method to insure the handles are good to go
 
         public RootFrameBuffer() : this(0, 0, 80, 25) {
         }
 
+        // TODO 5: create a method to insure the handles are good to go
         public RootFrameBuffer(int X, int Y, int Width, int Height) {
             // grabs the handle for the console window
-            _hConsoleOut = APICall.CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+            _hConsoleOut = APICall.CreateFile("CONOUT$", 0x40000000 | 0x80000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
             _hConsoleIn = APICall.CreateFile("CONIN$", 0x80000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
 
             this.X = X;
@@ -832,6 +807,169 @@ namespace ConsoleFrameBuffer {
                 Right = (short)(_bufferwidth + this.X),
                 Bottom = (short)(_bufferheight + this.Y)
             };
+        }
+
+        public delegate void KeyPressedDelegate(VirtualKeys KeyPressed, ControlKeyState KeyModifiers);
+
+        public delegate void KeyReleasedDelegate(VirtualKeys KeyReleased, ControlKeyState KeyModifiers);
+
+        public delegate void MouseDownDelegate(int X, int Y, VirtualKeys ButtonState);
+
+        public delegate void MouseMoveDelegate(int X, int Y);
+
+        public delegate void RenderDelegate();
+
+        public delegate void UpdateDelegate();
+
+        public event KeyPressedDelegate KeyPressed;
+
+        public event KeyReleasedDelegate KeyReleased;
+
+        public event MouseDownDelegate MouseDown;
+
+        public event MouseMoveDelegate MouseMove;
+
+        public event RenderDelegate Render;
+
+        public event UpdateDelegate Update;
+
+        public bool CursorVisible { get { return getCursorVisibility(); } }
+        public int CursorX { get; set; }
+        public int CursorY { get; set; }
+        public int Height { get { return _bufferheight; } protected set { _bufferheight = (short)(value < 0 ? 0 : value); } }
+        public int Width { get { return _bufferwidth; } protected set { _bufferwidth = (short)(value < 0 ? 0 : value); } }
+        public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
+        public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
+
+        /// <summary>
+        /// Copies the source buffer frame to the destination buffer frame.
+        /// </summary>
+        /// <param name="src">Buffer frame to be copied.</param>
+        /// <param name="dest">Buffer frame that will be copied over by the source buffer frame.</param>
+        public static void CopyBuffer(RootFrameBuffer src, RootFrameBuffer dest) {
+            if (src == null || dest == null) return;
+            if (src._buffer == null || dest._buffer == null) return;
+
+            for (int i = 0; i < src._buffer.Length; i++) {
+                if (src._buffer[i].Char.AsciiChar > 0)
+                    dest._buffer[i + src._bufferwidth * src.Y] = src._buffer[i];
+            }
+        }
+
+        /// <summary>
+        /// Clears the buffer frame.
+        /// </summary>
+        public void Clear() {
+            _buffer = new CharInfo[_bufferwidth * _bufferheight];
+        }
+
+        public void Dispose() {
+            Dispose(true);
+
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Reads the first character from the input.
+        /// </summary>
+        /// <returns>Returns the first character of the string inputed.</returns>
+        public string Read() {
+            StringBuilder sb = new StringBuilder();
+            uint read = 0;
+
+            if (APICall.ReadConsole(_hConsoleIn, sb, 1, out read, IntPtr.Zero)) {
+                return sb.ToString(0, (int)read);
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Reads input until ended.
+        /// </summary>
+        /// <returns>Returns input as a string.</returns>
+        public string ReadLine() {
+            StringBuilder sb = new StringBuilder();
+            uint read = 0;
+
+            if (APICall.ReadConsole(_hConsoleIn, sb, 256, out read, IntPtr.Zero)) {
+                return sb.ToString(0, (int)read - 1);
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Resizes the buffer frame.
+        /// </summary>
+        /// <param name="Width">Width of buffer frame.</param>
+        /// <param name="Height">Height of buffer frame.</param>
+        public void ResizeBuffer(int Width, int Height) {
+            this.Width = Width;
+            this.Height = Height;
+
+            _buffer = new CharInfo[_bufferwidth * _bufferheight];
+
+            updateBufferPos();
+        }
+
+        /// <summary>
+        /// Runs the Render and Update methods in a loop.
+        /// </summary>
+        public void Run() {
+            if (Update == null || Render == null) {
+                return;
+            }
+
+            _running = true;
+
+            while (_running) {
+                getInput();
+                Update();
+                Render();
+            }
+
+            Dispose();
+        }
+
+        /// <summary>
+        /// Sets the buffer frame's position.
+        /// </summary>
+        /// <param name="X">X position</param>
+        /// <param name="Y">Y position</param>
+        public void SetBufferPosition(int X, int Y) {
+            this.X = X;
+            this.Y = Y;
+        }
+
+        /// <summary>
+        /// Sets the console cursor position relative to the buffer frame.
+        /// </summary>
+        /// <param name="X">X position</param>
+        /// <param name="Y">Y position</param>
+        public void SetCursorPosition(int X, int Y) {
+            _cursorPosition = new Coord((short)(X + this.X), (short)(Y + this.Y));
+
+            if (!APICall.SetConsoleCursorPosition(_hConsoleOut, _cursorPosition)) {
+                Write(0, 0, "Failed to update cursor position.", ConsoleColor.Red);
+                WriteBuffer();
+            }
+        }
+
+        public bool SetCursorVisibility(int Size, bool Visible) {
+            CONSOLE_CURSOR_INFO cci = new CONSOLE_CURSOR_INFO {
+                dwSize = (uint)Size,
+                bVisible = Visible
+            };
+
+            return APICall.SetConsoleCursorInfo(_hConsoleOut, ref cci);
+        }
+
+        /// <summary>
+        /// Stops the loop.
+        /// </summary>
+        public void Stop() {
+            _running = false;
         }
 
         /// <summary>
@@ -883,50 +1021,6 @@ namespace ConsoleFrameBuffer {
         }
 
         /// <summary>
-        /// Reads the first character from the input.
-        /// </summary>
-        /// <returns>Returns the first character of the string inputed.</returns>
-        public string Read() {
-            StringBuilder sb = new StringBuilder();
-            uint read = 0;
-
-            if (APICall.ReadConsole(_hConsoleIn, sb, 1, out read, IntPtr.Zero)) {
-                return sb.ToString(0, (int)read);
-            }
-
-            return string.Empty;
-        }
-
-        /// <summary>
-        /// Reads input until ended.
-        /// </summary>
-        /// <returns>Returns input as a string.</returns>
-        public string ReadLine() {
-            StringBuilder sb = new StringBuilder();
-            uint read = 0;
-
-            if (APICall.ReadConsole(_hConsoleIn, sb, 256, out read, IntPtr.Zero)) {
-                return sb.ToString(0, (int)read - 1);
-            }
-
-            return string.Empty;
-        }
-
-        /// <summary>
-        /// Sets the console cursor position relative to the buffer frame.
-        /// </summary>
-        /// <param name="X">X position</param>
-        /// <param name="Y">Y position</param>
-        public void SetCursorPosition(int X, int Y) {
-            _cursorPosition = new Coord((short)(X + this.X), (short)(Y + this.Y));
-
-            if (!APICall.SetConsoleCursorPosition(_hConsoleOut, _cursorPosition)) {
-                Write(0, 0, "Failed to update cursor position.", ConsoleColor.Red);
-                WriteBuffer();
-            }
-        }
-
-        /// <summary>
         /// Draws the buffer frame to the console window.
         /// </summary>
         public void WriteBuffer() {
@@ -939,84 +1033,29 @@ namespace ConsoleFrameBuffer {
             }
         }
 
-        /// <summary>
-        /// Copies the source buffer frame to the destination buffer frame.
-        /// </summary>
-        /// <param name="src">Buffer frame to be copied.</param>
-        /// <param name="dest">Buffer frame that will be copied over by the source buffer frame.</param>
-        public static void CopyBuffer(RootFrameBuffer src, RootFrameBuffer dest) {
-            if (src == null || dest == null) return;
-            if (src._buffer == null || dest._buffer == null) return;
+        protected virtual void Dispose(bool disposing) {
+            if (!_disposed) {
+                if (disposing) {
+                    if (_hConsoleOut != null) { _hConsoleOut.Close(); _hConsoleOut.Dispose(); _hConsoleOut = null; }
+                    if (_hConsoleIn != null) { _hConsoleIn.Close(); _hConsoleIn.Dispose(); _hConsoleIn = null; }
+                }
 
-            for (int i = 0; i < src._buffer.Length; i++) {
-                if (src._buffer[i].Char.AsciiChar > 0)
-                    dest._buffer[i + src._bufferwidth * src.Y] = src._buffer[i];
+                _disposed = true;
             }
         }
 
-        /// <summary>
-        /// Sets the buffer frame's position.
-        /// </summary>
-        /// <param name="X">X position</param>
-        /// <param name="Y">Y position</param>
-        public void SetBufferPosition(int X, int Y) {
-            this.X = X;
-            this.Y = Y;
-        }
+        private bool getCursorVisibility() {
+            CONSOLE_CURSOR_INFO cci = new CONSOLE_CURSOR_INFO();
 
-        private void updateBufferPos() {
-            _rect = new SMALL_RECT() {
-                Left = (short)X,
-                Top = (short)Y,
-                Right = (short)(_bufferwidth + X),
-                Bottom = (short)(_bufferheight + Y)
-            };
-        }
+            bool result = APICall.GetConsoleCursorInfo(_hConsoleOut, out cci);
 
-        /// <summary>
-        /// Resizes the buffer frame.
-        /// </summary>
-        /// <param name="Width">Width of buffer frame.</param>
-        /// <param name="Height">Height of buffer frame.</param>
-        public void ResizeBuffer(int Width, int Height) {
-            this.Width = Width;
-            this.Height = Height;
-
-            _buffer = new CharInfo[_bufferwidth * _bufferheight];
-
-            updateBufferPos();
-        }
-
-        /// <summary>
-        /// Clears the buffer frame.
-        /// </summary>
-        public void Clear() {
-            _buffer = new CharInfo[_bufferwidth * _bufferheight];
-        }
-
-        /// <summary>
-        /// Runs the Render and Update methods in a loop.
-        /// </summary>
-        public void Run() {
-            if (Update_Event == null || Render_Event == null) {
-                return;
-            }
-
-            _running = true;
-
-            while (_running) {
-                getInput();
-                Update_Event();
-                Render_Event();
-            }
-
-            Dispose();
+            return cci.bVisible;
         }
 
         private void getInput() {
             // make sure we don't capture input if they don't use the built in events
-            if (KeyPressed_Event == null && KeyReleased_Event == null &&
-                MouseMove_Event == null && MouseDown_Event == null) {
+            if (KeyPressed == null && KeyReleased == null &&
+                MouseMove == null && MouseDown == null) {
                 return;
             }
 
@@ -1038,25 +1077,25 @@ namespace ConsoleFrameBuffer {
                     switch (eventBuffer[i].EventType) {
                         case EventType.KEY_EVENT:
                             if (eventBuffer[i].KeyEvent.bKeyDown) {
-                                if (KeyPressed_Event == null) return;
+                                if (KeyPressed == null) return;
 
-                                KeyPressed_Event(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
+                                KeyPressed(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
                             } else {
-                                if (KeyReleased_Event == null) return;
+                                if (KeyReleased == null) return;
 
-                                KeyReleased_Event(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
+                                KeyReleased(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
                             }
                             break;
 
                         case EventType.MOUSE_EVENT:
-                            if (MouseMove_Event == null) return;
+                            if (MouseMove == null) return;
 
-                            MouseMove_Event(eventBuffer[i].MouseEvent.dwMousePosition.X, eventBuffer[i].MouseEvent.dwMousePosition.Y);
+                            MouseMove(eventBuffer[i].MouseEvent.dwMousePosition.X, eventBuffer[i].MouseEvent.dwMousePosition.Y);
 
                             if (eventBuffer[i].MouseEvent.dwButtonState > 0) {
-                                if (MouseDown_Event == null) return;
+                                if (MouseDown == null) return;
 
-                                MouseDown_Event(
+                                MouseDown(
                                     eventBuffer[i].MouseEvent.dwMousePosition.X,
                                     eventBuffer[i].MouseEvent.dwMousePosition.Y,
                                     eventBuffer[i].MouseEvent.dwButtonState);
@@ -1067,28 +1106,13 @@ namespace ConsoleFrameBuffer {
             }
         }
 
-        /// <summary>
-        /// Stops the loop.
-        /// </summary>
-        public void Stop() {
-            _running = false;
-        }
-
-        public void Dispose() {
-            Dispose(true);
-
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing) {
-            if (!_disposed) {
-                if (disposing) {
-                    if (_hConsoleOut != null) { _hConsoleOut.Close(); _hConsoleOut.Dispose(); _hConsoleOut = null; }
-                    if (_hConsoleIn != null) { _hConsoleIn.Close(); _hConsoleIn.Dispose(); _hConsoleIn = null; }
-                }
-
-                _disposed = true;
-            }
+        private void updateBufferPos() {
+            _rect = new SMALL_RECT() {
+                Left = (short)X,
+                Top = (short)Y,
+                Right = (short)(_bufferwidth + X),
+                Bottom = (short)(_bufferheight + Y)
+            };
         }
     }
 }
