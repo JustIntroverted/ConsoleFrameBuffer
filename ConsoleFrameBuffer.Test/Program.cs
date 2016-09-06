@@ -44,7 +44,7 @@ namespace ConsoleFrameBuffer.Test {
             _rootBuffer.MouseButton_DoubleClicked += _rootBuffer_MouseButton_DoubleClicked;
 
             using (RootFrameBuffer frame = new RootFrameBuffer(0, 0, 30, 1)) {
-                frame.Write(0, 0, "Player Name: \r", ConsoleColor.White, ConsoleColor.Black, true);
+                frame.Write(0, 0, "Player Name: \n", ConsoleColor.White, ConsoleColor.Black, true);
                 frame.WriteBuffer();
 
                 while (_playerName.Trim().Length == 0) {
@@ -57,7 +57,7 @@ namespace ConsoleFrameBuffer.Test {
                 frame.WriteBuffer();
             }
 
-            _caveMap.Generate(500, 100);
+            _caveMap.Generate(80, 80);
 
             _player.X = _caveMap.UpFloorPosition.X;
             _player.Y = _caveMap.UpFloorPosition.Y;
@@ -114,10 +114,8 @@ namespace ConsoleFrameBuffer.Test {
                         using (RootFrameBuffer frame = new RootFrameBuffer(5, 10, 50, 3)) {
                             string ans = string.Empty;
 
-                            frame.Write(1, 1, "Do you wish to drop down a floor? yes/no", ConsoleColor.White, ConsoleColor.Black, true);
+                            frame.Write(1, 1, "Do you wish to drop down a floor? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
                             frame.WriteBuffer();
-
-                            frame.SetCursorPosition(1, frame.Height - 1);
 
                             ans = frame.Read().Trim().ToLower();
 
@@ -125,7 +123,7 @@ namespace ConsoleFrameBuffer.Test {
                                 frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
                                 frame.WriteBuffer();
 
-                                _caveMap.Generate(500, 100);
+                                _caveMap.Generate(80, 80);
                                 _player = _caveMap.UpFloorPosition;
                             }
                         }
@@ -140,10 +138,8 @@ namespace ConsoleFrameBuffer.Test {
                     using (RootFrameBuffer frame = new RootFrameBuffer(5, 10, 50, 3)) {
                         string ans = string.Empty;
 
-                        frame.Write(1, 1, "Are you sure you want to quit? yes/no", ConsoleColor.White, ConsoleColor.Black, true);
+                        frame.Write(1, 1, "Are you sure you want to quit? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
                         frame.WriteBuffer();
-
-                        frame.SetCursorPosition(1, frame.Height - 1);
 
                         ans = frame.Read().Trim().ToLower();
 

@@ -991,8 +991,8 @@ namespace ConsoleFrameBuffer {
         /// <param name="Text">The string to be written to the buffer frame.</param>
         /// <param name="ForegroundColor">The foreground color of the string.</param>
         /// <param name="BackgroundColor">The background color of the string.</param>
-        /// <param name="UpdateCursorPosition">If you choose to update the console cursor position
-        /// with each update.  Setting this to 'true' will cause performance issues.</param>
+        /// <param name="UpdateCursorPosition">Will update the location of the console cursor relative to the position of the frame it's in.
+        /// Setting this to 'true' can cause performance issues.</param>
         public void Write(int X, int Y, string Text,
             ConsoleColor ForegroundColor = ConsoleColor.Gray,
             ConsoleColor BackgroundColor = ConsoleColor.Black,
@@ -1004,12 +1004,13 @@ namespace ConsoleFrameBuffer {
             for (int i = 0; i < Text.Length; ++i) {
                 switch (Text[i]) {
                     // newline
-                    case '\n': y++; break;
+                    case '\n': x = 0; y++; break;
 
                     // carriage return
-                    case '\r': x = 0; y++; break;
+                    case '\r': x = 0; break;
 
                     // tab
+                    // TODO 6: Implement Tabstop
                     case '\t': x += 5; break;
 
                     default:
@@ -1027,7 +1028,7 @@ namespace ConsoleFrameBuffer {
             }
 
             if (UpdateCursorPosition)
-                SetCursorPosition(x, y);
+                SetCursorPosition(x + X, y + Y);
         }
 
         /// <summary>
