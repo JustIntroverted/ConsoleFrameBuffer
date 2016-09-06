@@ -81,6 +81,7 @@ namespace ConsoleFrameBuffer.Test {
 
         private static void Main(string[] args) {
             Console.Title = "ConsoleFrameBuffer.Test";
+            Console.CursorVisible = false;
 
             Program prog = new Program();
         }

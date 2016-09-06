@@ -1,6 +1,7 @@
 ﻿using ConsoleFrameBuffer.Test.Utility;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ConsoleFrameBuffer.Test.Mapping {
 
@@ -75,6 +76,112 @@ namespace ConsoleFrameBuffer.Test.Mapping {
             }
         }
 
+        private void seedMap() {
+            byte rndpercent = 0;
+
+            for (int x = 0; x < Width; x++) {
+                for (int y = 0; y < Height; y++) {
+                    rndpercent = (byte)Program.RandomNumber.Next(0, 100);
+
+                    if (rndpercent < 50) {
+                        Tiles[x, y] = new Tile(
+                            ".",
+                            ConsoleColor.Gray,
+                            ConsoleColor.Black,
+                            true, false);
+                    } else {
+                        Tiles[x, y] = new Tile(
+                            ((char)219).ToString(),
+                            ConsoleColor.Gray,
+                            ConsoleColor.Black,
+                            false, true);
+                    }
+                }
+            }
+
+            for (int x = 0; x < Width; x++) {
+                for (int y = 0; y < Height; y++) {
+                    Tiles[x, 0] = new Tile(
+                            ((char)219).ToString(),
+                            ConsoleColor.Gray,
+                            ConsoleColor.Black,
+                            false, true);           // top
+                    Tiles[Width - 1, y] = new Tile(
+                            ((char)219).ToString(),
+                            ConsoleColor.Gray,
+                            ConsoleColor.Black,
+                            false, true);   // right
+                    Tiles[0, y] = new Tile(
+                            ((char)219).ToString(),
+                            ConsoleColor.Gray,
+                            ConsoleColor.Black,
+                            false, true);           // left
+                    Tiles[x, Height - 1] = new Tile(
+                            ((char)219).ToString(),
+                            ConsoleColor.Gray,
+                            ConsoleColor.Black,
+                            false, true);  // bottom
+                }
+            }
+        }
+
+        public void FillFromPoint(Point point) {
+            restart:
+            seedMap();
+
+            List<Point> Filled = new List<Point>();
+            Point curPoint = point;
+            List<Point> Neighbors = getArea(4, 1, curPoint);
+
+            Filled.Add(curPoint);
+
+            while (Neighbors.Count > 0) {
+                curPoint = Neighbors[0];
+
+                List<Point> newNeighbors = getArea(4, 1, curPoint);
+
+                foreach (Point p in newNeighbors) {
+                    if (!IsOutOfBounds(p.X, p.Y) && Tiles[p.X, p.Y].Walkable &&
+                        !Neighbors.Any(xy => xy.X == p.X && xy.Y == p.Y) &&
+                        !Filled.Any(xy => xy.X == p.X && xy.Y == p.Y)) {
+                        Neighbors.Add(p);
+                    }
+                }
+
+                if (!Filled.Any(xy => xy.X == curPoint.X && xy.Y == curPoint.Y)) Filled.Add(curPoint);
+                Neighbors.Remove(curPoint);
+            }
+
+            int minCellCount = 500;
+
+            if (Filled.Count < minCellCount) {
+                goto restart;
+            }
+
+            for (int x = 0; x < Width; x++) {
+                for (int y = 0; y < Height; y++) {
+                    if (!containsPoint(Filled, new Point(x, y))) {
+                        Tiles[x, y] = new Tile(
+                            ((char)219).ToString(),
+                            ConsoleColor.Gray,
+                            ConsoleColor.Black,
+                            false, true);
+                    }
+                }
+            }
+
+            CleanMap(((char)219).ToString(), ".", 20);
+        }
+
+        private bool containsPoint(List<Point> list, Point point) {
+            for (int i = 0; i < list.Count; i++) {
+                if (list[i].X == point.X && list[i].Y == point.Y)
+                    return true;
+            }
+
+            return false;
+        }
+
         public void CleanMap(string id, string toid, int loops) {
             for (int j = 0; j < loops; j++) {
                 for (int x = 1; x < Tiles.GetUpperBound(0) - 1; x++) {
@@ -83,7 +190,7 @@ namespace ConsoleFrameBuffer.Test.Mapping {
                             Tiles[x, y] = new Tile(toid,
                                                     ConsoleColor.Gray,
                                                     ConsoleColor.Black,
-                                                    true);
+                                                    true, false);
                         }
                     }
                 }

@@ -937,8 +937,6 @@ namespace ConsoleFrameBuffer {
                 getInput();
                 Update();
                 Render();
-
-                Thread.Sleep(0);
             }
 
             Dispose();
