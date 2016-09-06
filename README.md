@@ -18,7 +18,6 @@ namespace YourProject {
 
         // width and height for the buffer frame
         private const int _width = 80;
-
         private const int _height = 25;
 
         // create new buffer frame
@@ -26,15 +25,14 @@ namespace YourProject {
 
         // player variables
         private int _playerX = 0;
-
         private int _playerY = 0;
         private string _playerID = "@";
 
         public Program() {
             // create the events for the buffer
-            _rootBuffer.Update_Event += _rootBuffer_Update_Event;
-            _rootBuffer.Render_Event += _rootBuffer_Render_Event;
-            _rootBuffer.KeyPressed_Event += _rootBuffer_KeyPressed_Event;
+            _rootBuffer.Update += _rootBuffer_Update;
+            _rootBuffer.Render += _rootBuffer_Render;
+            _rootBuffer.Key_Pressed += _rootBuffer_Key_Pressed;
 
             // run the buffer's update and render events in a loop
             _rootBuffer.Run();
@@ -46,7 +44,7 @@ namespace YourProject {
             Console.Clear();
         }
 
-        private void _rootBuffer_KeyPressed_Event(VirtualKeys KeyPressed, ControlKeyState KeyModifiers) {
+        private void _rootBuffer_Key_Pressed(VirtualKeys KeyPressed, ControlKeyState KeyModifiers) {
             // moves the "@" around the screen
             if (KeyPressed == VirtualKeys.W)
                 _playerY--;
@@ -62,11 +60,11 @@ namespace YourProject {
                 _rootBuffer.Stop();
         }
 
-        private void _rootBuffer_Update_Event() {
+        private void _rootBuffer_Update() {
             // maybe some game logic here?
         }
 
-        private void _rootBuffer_Render_Event() {
+        private void _rootBuffer_Render() {
             // clear the buffer frame
             _rootBuffer.Clear();
 
