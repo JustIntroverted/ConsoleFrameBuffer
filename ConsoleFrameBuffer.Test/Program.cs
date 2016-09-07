@@ -112,14 +112,12 @@ namespace ConsoleFrameBuffer.Test {
                 if (KeyPressed == VirtualKeys.OEMPeriod) {
                     if (_caveMap.DownFloorPosition == _player) {
                         using (RootFrameBuffer frame = new RootFrameBuffer(5, 10, 50, 3)) {
-                            string ans = string.Empty;
-
                             frame.Write(1, 1, "Do you wish to drop down a floor? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
                             frame.WriteBuffer();
 
-                            ans = frame.Read().Trim().ToLower();
+                            char ans = frame.ReadKey();
 
-                            if (ans == "y") {
+                            if (ans == 'y' || ans == 'Y') {
                                 frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
                                 frame.WriteBuffer();
 
@@ -136,14 +134,12 @@ namespace ConsoleFrameBuffer.Test {
                 // KEYS: CTRL + Q
                 if (KeyPressed == VirtualKeys.Q) {
                     using (RootFrameBuffer frame = new RootFrameBuffer(5, 10, 50, 3)) {
-                        string ans = string.Empty;
-
                         frame.Write(1, 1, "Are you sure you want to quit? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
                         frame.WriteBuffer();
 
-                        ans = frame.Read().Trim().ToLower();
+                        char ans = frame.ReadKey();
 
-                        if (ans == "y") {
+                        if (ans == 'y' || ans == 'Y') {
                             _rootBuffer.Stop();
                         }
                     }

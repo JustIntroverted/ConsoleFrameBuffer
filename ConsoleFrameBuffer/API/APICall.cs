@@ -24,6 +24,9 @@ namespace ConsoleFrameBuffer.API {
         public static extern bool FlushConsoleInputBuffer(
             SafeFileHandle hConsoleInput);
 
+        [DllImport("msvcrt.dll")]
+        public static extern int _getch();
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool GetConsoleCursorInfo(
             SafeFileHandle hConsoleOutput,
@@ -38,6 +41,9 @@ namespace ConsoleFrameBuffer.API {
         public static extern bool GetNumberOfConsoleInputEvents(
             SafeFileHandle hConsoleInput,
             out uint lpcNumberOfEvents);
+
+        [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int _kbhit();
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool ReadConsole(

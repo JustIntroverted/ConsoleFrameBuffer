@@ -909,6 +909,10 @@ namespace ConsoleFrameBuffer {
             return string.Empty;
         }
 
+        public char ReadKey() {
+            return (char)APICall._getch();
+        }
+
         /// <summary>
         /// Resizes the buffer frame.
         /// </summary>
