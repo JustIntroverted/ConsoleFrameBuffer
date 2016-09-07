@@ -116,9 +116,9 @@ namespace ConsoleFrameBuffer.Test {
                             frame.Write(1, 1, "Do you wish to drop down a floor? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
                             frame.WriteBuffer();
 
-                            char ans = frame.ReadKey();
+                            VirtualKeys ans = frame.ReadAsVirtualKey();
 
-                            if (ans == 'y' || ans == 'Y') {
+                            if (ans == VirtualKeys.Y) {
                                 frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
                                 frame.WriteBuffer();
 
@@ -139,7 +139,7 @@ namespace ConsoleFrameBuffer.Test {
                         frame.WriteBuffer();
 
                         VirtualKeys ans = frame.ReadAsVirtualKey();
-                        addLog(ans.ToString() + " - " + ((int)ans).ToString());
+
                         if (ans == VirtualKeys.Y) {
                             _rootBuffer.Stop();
                         }
