@@ -42,8 +42,28 @@ namespace ConsoleFrameBuffer.API {
             SafeFileHandle hConsoleInput,
             out uint lpcNumberOfEvents);
 
-        [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern int _kbhit();
+        [DllImport("user32.dll")]
+        public static extern uint MapVirtualKey(
+            uint uCode, 
+            uint uMapType);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        public static extern short VkKeyScanEx(
+            char ch, 
+            IntPtr dwhkl);
+
+        [DllImport("user32.dll")]
+        public static extern bool UnloadKeyboardLayout(
+            IntPtr hkl);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr LoadKeyboardLayout(
+            string pwszKLID, 
+            uint Flags);
+
+        [DllImport("user32.dll")]
+        public static extern bool GetKeyboardLayoutName(
+            [Out] StringBuilder pwszKLID);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool ReadConsole(

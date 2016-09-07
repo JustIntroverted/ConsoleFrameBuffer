@@ -909,8 +909,38 @@ namespace ConsoleFrameBuffer {
             return string.Empty;
         }
 
+        /// <summary>
+        /// Returns a char based on the key pressed provided
+        /// </summary>
+        /// <returns>Char</returns>
         public char ReadKey() {
             return (char)APICall._getch();
+        }
+
+        /// <summary>
+        /// Returns read key as a Virtual Key
+        /// </summary>
+        /// <returns>Virtual Key</returns>
+        public VirtualKeys ReadAsVirtualKey() {
+            int a = APICall._getch();
+
+            if (a == 0 || a == 0xE0) {
+                int b = APICall._getch();
+
+                b = (int)APICall.MapVirtualKey((uint)b, 1);
+
+                return (VirtualKeys)b;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            APICall.GetKeyboardLayoutName(sb);
+            IntPtr ptr = APICall.LoadKeyboardLayout(sb.ToString(), 1);
+
+            char c = (char)APICall.VkKeyScanEx((char)a, ptr);
+
+            APICall.UnloadKeyboardLayout(ptr);
+
+            return (VirtualKeys)c;
         }
 
         /// <summary>

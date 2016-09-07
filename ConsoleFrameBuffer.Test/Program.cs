@@ -9,6 +9,7 @@ using ConsoleFrameBuffer.Test.Utility;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 
 namespace ConsoleFrameBuffer.Test {
 
@@ -137,9 +138,9 @@ namespace ConsoleFrameBuffer.Test {
                         frame.Write(1, 1, "Are you sure you want to quit? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
                         frame.WriteBuffer();
 
-                        char ans = frame.ReadKey();
-
-                        if (ans == 'y' || ans == 'Y') {
+                        VirtualKeys ans = frame.ReadAsVirtualKey();
+                        addLog(ans.ToString() + " - " + ((int)ans).ToString());
+                        if (ans == VirtualKeys.Y) {
                             _rootBuffer.Stop();
                         }
                     }
