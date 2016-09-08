@@ -4,12 +4,11 @@
     up using ConsoleFrameBuffer.
 */
 
-using ConsoleFrameBuffer.Test.Mapping;
-using ConsoleFrameBuffer.Test.Utility;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
+using ConsoleFrameBuffer.Test.Mapping;
+using ConsoleFrameBuffer.Test.Utility;
 
 namespace ConsoleFrameBuffer.Test {
 
@@ -18,9 +17,9 @@ namespace ConsoleFrameBuffer.Test {
         private static int _height = 25;
         private static Stopwatch _sw = new Stopwatch();
         private static int _width = 80;
-        private RootFrameBuffer _bufferLogs = new RootFrameBuffer(0, _height - 6, _width, 5);
-        private RootFrameBuffer _bufferMap = new RootFrameBuffer(0, 5, _width, _height - 11);
-        private RootFrameBuffer _bufferStats = new RootFrameBuffer(0, 0, _width, 5);
+        private RootFrame _bufferLogs = new RootFrame(0, _height - 6, _width, 5);
+        private RootFrame _bufferMap = new RootFrame(0, 5, _width, _height - 11);
+        private RootFrame _bufferStats = new RootFrame(0, 0, _width, 5);
         private CaveMap _caveMap = new CaveMap();
         private long _frames;
         private List<string> _logs = new List<string>();
@@ -28,7 +27,7 @@ namespace ConsoleFrameBuffer.Test {
         private Point _player = new Point();
         private Camera _playerCamera = new Camera();
         private string _playerName = string.Empty;
-        private RootFrameBuffer _rootBuffer = new RootFrameBuffer(0, 0, _width, _height);
+        private RootFrame _rootBuffer = new RootFrame(0, 0, _width, _height);
         private TimeSpan _sample;
         private float _value;
         private Array colors = Enum.GetValues(typeof(ConsoleColor));
@@ -44,7 +43,7 @@ namespace ConsoleFrameBuffer.Test {
             _rootBuffer.MouseButton_Clicked += _rootBuffer_MouseButton_Clicked;
             _rootBuffer.MouseButton_DoubleClicked += _rootBuffer_MouseButton_DoubleClicked;
 
-            using (RootFrameBuffer frame = new RootFrameBuffer(0, 0, 30, 1)) {
+            using (RootFrame frame = new RootFrame(0, 0, 30, 1)) {
                 frame.Write(0, 0, "Player Name: \n", ConsoleColor.White, ConsoleColor.Black, true);
                 frame.WriteBuffer();
 
@@ -112,7 +111,7 @@ namespace ConsoleFrameBuffer.Test {
                 // KEY: SHIFT + . = >
                 if (KeyPressed == VirtualKeys.OEMPeriod) {
                     if (_caveMap.DownFloorPosition == _player) {
-                        using (RootFrameBuffer frame = new RootFrameBuffer(5, 10, 50, 3)) {
+                        using (RootFrame frame = new RootFrame(5, 10, 50, 3)) {
                             frame.Write(1, 1, "Do you wish to drop down a floor? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
                             frame.WriteBuffer();
 
@@ -134,7 +133,7 @@ namespace ConsoleFrameBuffer.Test {
                 KeyModifers == ControlKeyState.RightCtrlPressed) {
                 // KEYS: CTRL + Q
                 if (KeyPressed == VirtualKeys.Q) {
-                    using (RootFrameBuffer frame = new RootFrameBuffer(5, 10, 50, 3)) {
+                    using (RootFrame frame = new RootFrame(5, 10, 50, 3)) {
                         frame.Write(1, 1, "Are you sure you want to quit? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
                         frame.WriteBuffer();
 
@@ -208,9 +207,9 @@ namespace ConsoleFrameBuffer.Test {
 
             _bufferMap.Write(_player.X - _playerCamera.X, _player.Y - _playerCamera.Y, "@", ConsoleColor.Red);
 
-            RootFrameBuffer.CopyBuffer(_bufferStats, _rootBuffer);
-            RootFrameBuffer.CopyBuffer(_bufferMap, _rootBuffer);
-            RootFrameBuffer.CopyBuffer(_bufferLogs, _rootBuffer);
+            RootFrame.CopyBuffer(_bufferStats, _rootBuffer);
+            RootFrame.CopyBuffer(_bufferMap, _rootBuffer);
+            RootFrame.CopyBuffer(_bufferLogs, _rootBuffer);
 
             _rootBuffer.Write(_mousePos.X, _mousePos.Y, "#", ConsoleColor.Red);
 

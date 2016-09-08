@@ -46,8 +46,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="API\APICall.cs" />
-    <Compile Include="ConsoleFrameBuffer.cs" />
+    <Compile Include="APICall.cs" />
+    <Compile Include="ChildFrame.cs" />
+    <Compile Include="IFrame.cs" />
+    <Compile Include="RootFrame.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,5 @@
-﻿using ConsoleFrameBuffer.Test.Utility;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using ConsoleFrameBuffer.Test.Utility;
 
 namespace ConsoleFrameBuffer.Test.Mapping {
 
