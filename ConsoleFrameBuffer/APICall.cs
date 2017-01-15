@@ -824,12 +824,12 @@
             uint uCode,
             uint uMapType);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern bool ReadConsole(
             SafeFileHandle hConsoleInput,
-            [Out] StringBuilder lpBuffer,
+            [MarshalAs(UnmanagedType.LPTStr)] [Out] StringBuilder lpBuffer,
             [MarshalAs(UnmanagedType.U4)] uint nNumberOfCharsToRead,
-            [MarshalAs(UnmanagedType.U4)] out uint lpNumberOfCharsRead,
+            [MarshalAs(UnmanagedType.U4)] [Out] out uint lpNumberOfCharsRead,
             IntPtr pInputControl);
 
         [DllImport("kernel32.dll", EntryPoint = "ReadConsoleInputW", CharSet = CharSet.Unicode)]

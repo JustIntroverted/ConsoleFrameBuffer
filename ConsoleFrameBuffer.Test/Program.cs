@@ -14,9 +14,9 @@ namespace ConsoleFrameBuffer.Test {
 
     internal class Program {
         public static Random RandomNumber = new Random();
+        private static int _width = 80;
         private static int _height = 25;
         private static Stopwatch _sw = new Stopwatch();
-        private static int _width = 80;
         private ConsoleFrame _bufferLogs = new ConsoleFrame(0, _height - 6, _width, 5);
         private ConsoleFrame _bufferMap = new ConsoleFrame(0, 5, _width, _height - 11);
         private ConsoleFrame _bufferStats = new ConsoleFrame(0, 0, _width, 5);
@@ -40,19 +40,22 @@ namespace ConsoleFrameBuffer.Test {
             _rootBuffer.Key_Pressed += _rootBuffer_KeyPressed;
             _rootBuffer.Key_Released += _rootBuffer_KeyReleased;
             _rootBuffer.Mouse_Moved += _rootBuffer_MouseMoved;
-            _rootBuffer.MouseButton_Clicked += _rootBuffer_MouseButtonClicked;
+            _rootBuffer.MouseButton_Clicked += _rootBuffer_MouseButton_Clicked;
             _rootBuffer.MouseButton_DoubleClicked += _rootBuffer_MouseButton_DoubleClicked;
 
-            using (ConsoleFrame frame = new ConsoleFrame(0, 0, 30, 1)) {
+            using (ConsoleFrame frame = new ConsoleFrame(0, 0, _width, 10)) {
                 frame.Write(0, 0, "Player Name: \n", ConsoleColor.White, ConsoleColor.Black, true);
+                frame.SetCursorVisibility(100, true);
                 frame.WriteBuffer();
 
-                while (_playerName.Trim().Length == 0) {
-                    _playerName = _rootBuffer.ReadLine();
+                while (string.IsNullOrWhiteSpace(_playerName)) {
+                    _playerName = frame.ReadLine().Trim();
                 }
 
-                Console.Title = _playerName;
+                Console.Title = "Player: " + _playerName;
 
+                frame.Clear();
+                frame.SetCursorVisibility(0, false);
                 frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
                 frame.WriteBuffer();
             }
@@ -156,7 +159,7 @@ namespace ConsoleFrameBuffer.Test {
             _mousePos.Y = Y;
         }
 
-        private void _rootBuffer_MouseButtonClicked(int X, int Y, VirtualKeys ButtonState) {
+        private void _rootBuffer_MouseButton_Clicked(int X, int Y, VirtualKeys ButtonState) {
             addLog(string.Format("MouseButton Clicked: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
 
             if (ButtonState == VirtualKeys.LeftButton) {

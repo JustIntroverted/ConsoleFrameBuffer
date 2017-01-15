@@ -82,17 +82,17 @@
             this.Width = Width;
             this.Height = Height;
 
-            _buffer = new CharInfo[_bufferwidth * _bufferheight];
+            _buffer = new CharInfo[this.Width * this.Height];
 
             _rect = new SMALL_RECT() {
                 Left = (short)this.X,
                 Top = (short)this.Y,
-                Right = (short)(_bufferwidth + this.X),
-                Bottom = (short)(_bufferheight + this.Y)
+                Right = (short)(this.Width + this.X),
+                Bottom = (short)(this.Height + this.Y)
             };
         }
 
-        public void OnKeyPressed(VirtualKeys Key, ControlKeyState KeyModifiers) {
+        protected void OnKeyPressed(VirtualKeys Key, ControlKeyState KeyModifiers) {
             Key_Pressed?.Invoke(Key, KeyModifiers);
         }
 
@@ -100,7 +100,7 @@
             Key_Released?.Invoke(Key, KeyModifiers);
         }
 
-        public void OnMouseClicked(int X, int Y, VirtualKeys ButtonState) {
+        protected void OnMouseClicked(int X, int Y, VirtualKeys ButtonState) {
             MouseButton_Clicked?.Invoke(X, Y, ButtonState);
         }
 
@@ -225,10 +225,12 @@
         /// </summary>
         /// <returns>Returns input as a string.</returns>
         public string ReadLine() {
-            StringBuilder sb = new StringBuilder();
+            //TODO 9: probably shouldn't use the whole buffer space
+            int maxCount = Width * Height;
+            StringBuilder sb = new StringBuilder(maxCount);
             uint read = 0;
 
-            if (APICall.ReadConsole(_hConsoleIn, sb, 256, out read, IntPtr.Zero)) {
+            if (APICall.ReadConsole(_hConsoleIn, sb, (uint)maxCount, out read, IntPtr.Zero)) {
                 return sb.ToString(0, (int)read - 1);
             }
 
