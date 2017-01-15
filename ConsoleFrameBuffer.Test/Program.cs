@@ -17,9 +17,9 @@ namespace ConsoleFrameBuffer.Test {
         private static int _height = 25;
         private static Stopwatch _sw = new Stopwatch();
         private static int _width = 80;
-        private RootFrame _bufferLogs = new RootFrame(0, _height - 6, _width, 5);
-        private RootFrame _bufferMap = new RootFrame(0, 5, _width, _height - 11);
-        private RootFrame _bufferStats = new RootFrame(0, 0, _width, 5);
+        private ConsoleFrame _bufferLogs = new ConsoleFrame(0, _height - 6, _width, 5);
+        private ConsoleFrame _bufferMap = new ConsoleFrame(0, 5, _width, _height - 11);
+        private ConsoleFrame _bufferStats = new ConsoleFrame(0, 0, _width, 5);
         private CaveMap _caveMap = new CaveMap();
         private long _frames;
         private List<string> _logs = new List<string>();
@@ -27,7 +27,7 @@ namespace ConsoleFrameBuffer.Test {
         private Point _player = new Point();
         private Camera _playerCamera = new Camera();
         private string _playerName = string.Empty;
-        private RootFrame _rootBuffer = new RootFrame(0, 0, _width, _height);
+        private ConsoleFrame _rootBuffer = new ConsoleFrame(0, 0, _width, _height);
         private TimeSpan _sample;
         private float _value;
         private Array colors = Enum.GetValues(typeof(ConsoleColor));
@@ -37,13 +37,13 @@ namespace ConsoleFrameBuffer.Test {
 
             _rootBuffer.Update += _rootBuffer_Update;
             _rootBuffer.Render += _rootBuffer_Render;
-            _rootBuffer.Key_Pressed += _rootBuffer_Key_Pressed;
-            _rootBuffer.Key_Released += _rootBuffer_Key_Released;
-            _rootBuffer.Mouse_Moved += _rootBuffer_Mouse_Moved;
-            _rootBuffer.MouseButton_Clicked += _rootBuffer_MouseButton_Clicked;
+            _rootBuffer.Key_Pressed += _rootBuffer_KeyPressed;
+            _rootBuffer.Key_Released += _rootBuffer_KeyReleased;
+            _rootBuffer.Mouse_Moved += _rootBuffer_MouseMoved;
+            _rootBuffer.MouseButton_Clicked += _rootBuffer_MouseButtonClicked;
             _rootBuffer.MouseButton_DoubleClicked += _rootBuffer_MouseButton_DoubleClicked;
 
-            using (RootFrame frame = new RootFrame(0, 0, 30, 1)) {
+            using (ConsoleFrame frame = new ConsoleFrame(0, 0, 30, 1)) {
                 frame.Write(0, 0, "Player Name: \n", ConsoleColor.White, ConsoleColor.Black, true);
                 frame.WriteBuffer();
 
@@ -86,32 +86,32 @@ namespace ConsoleFrameBuffer.Test {
             Program prog = new Program();
         }
 
-        private void _rootBuffer_Key_Pressed(VirtualKeys KeyPressed, ControlKeyState KeyModifers) {
-            addLog("Key Pressed: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + KeyPressed.ToString()) : KeyPressed.ToString()));
+        private void _rootBuffer_KeyPressed(VirtualKeys Key, ControlKeyState KeyModifers) {
+            addLog("Key Pressed: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + Key.ToString()) : Key.ToString()));
 
-            if (KeyPressed == VirtualKeys.W &&
+            if (Key == VirtualKeys.W &&
                 _caveMap.IsWalkable(_player.X, _player.Y - 1))
                 _player.Y--;
-            if (KeyPressed == VirtualKeys.D &&
+            if (Key == VirtualKeys.D &&
                 _caveMap.IsWalkable(_player.X + 1, _player.Y))
                 _player.X++;
-            if (KeyPressed == VirtualKeys.S &&
+            if (Key == VirtualKeys.S &&
                 _caveMap.IsWalkable(_player.X, _player.Y + 1))
                 _player.Y++;
-            if (KeyPressed == VirtualKeys.A &&
+            if (Key == VirtualKeys.A &&
                 _caveMap.IsWalkable(_player.X - 1, _player.Y))
                 _player.X--;
 
-            if (KeyPressed == VirtualKeys.Tab) {
+            if (Key == VirtualKeys.Tab) {
                 _rootBuffer.SetCursorVisibility(1, !_rootBuffer.CursorVisible);
                 addLog("Cursor Visible: " + _rootBuffer.CursorVisible.ToString());
             }
 
             if (KeyModifers == ControlKeyState.ShiftPressed) {
                 // KEY: SHIFT + . = >
-                if (KeyPressed == VirtualKeys.OEMPeriod) {
+                if (Key == VirtualKeys.OEMPeriod) {
                     if (_caveMap.DownFloorPosition == _player) {
-                        using (RootFrame frame = new RootFrame(5, 10, 50, 3)) {
+                        using (ConsoleFrame frame = new ConsoleFrame(5, 10, 50, 3)) {
                             frame.Write(1, 1, "Do you wish to drop down a floor? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
                             frame.WriteBuffer();
 
@@ -132,8 +132,8 @@ namespace ConsoleFrameBuffer.Test {
             if (KeyModifers == ControlKeyState.LeftCtrlPressed ||
                 KeyModifers == ControlKeyState.RightCtrlPressed) {
                 // KEYS: CTRL + Q
-                if (KeyPressed == VirtualKeys.Q) {
-                    using (RootFrame frame = new RootFrame(5, 10, 50, 3)) {
+                if (Key == VirtualKeys.Q) {
+                    using (ConsoleFrame frame = new ConsoleFrame(5, 10, 50, 3)) {
                         frame.Write(1, 1, "Are you sure you want to quit? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
                         frame.WriteBuffer();
 
@@ -147,16 +147,16 @@ namespace ConsoleFrameBuffer.Test {
             }
         }
 
-        private void _rootBuffer_Key_Released(VirtualKeys KeyReleased, ControlKeyState KeyModifers) {
-            addLog("Key Released: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + KeyReleased.ToString()) : KeyReleased.ToString()));
+        private void _rootBuffer_KeyReleased(VirtualKeys Key, ControlKeyState KeyModifers) {
+            addLog("Key Released: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + Key.ToString()) : Key.ToString()));
         }
 
-        private void _rootBuffer_Mouse_Moved(int X, int Y) {
+        private void _rootBuffer_MouseMoved(int X, int Y) {
             _mousePos.X = X;
             _mousePos.Y = Y;
         }
 
-        private void _rootBuffer_MouseButton_Clicked(int X, int Y, VirtualKeys ButtonState) {
+        private void _rootBuffer_MouseButtonClicked(int X, int Y, VirtualKeys ButtonState) {
             addLog(string.Format("MouseButton Clicked: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
 
             if (ButtonState == VirtualKeys.LeftButton) {
@@ -207,9 +207,9 @@ namespace ConsoleFrameBuffer.Test {
 
             _bufferMap.Write(_player.X - _playerCamera.X, _player.Y - _playerCamera.Y, "@", ConsoleColor.Red);
 
-            RootFrame.CopyBuffer(_bufferStats, _rootBuffer);
-            RootFrame.CopyBuffer(_bufferMap, _rootBuffer);
-            RootFrame.CopyBuffer(_bufferLogs, _rootBuffer);
+            ConsoleFrame.CopyBuffer(_bufferStats, _rootBuffer);
+            ConsoleFrame.CopyBuffer(_bufferMap, _rootBuffer);
+            ConsoleFrame.CopyBuffer(_bufferLogs, _rootBuffer);
 
             _rootBuffer.Write(_mousePos.X, _mousePos.Y, "#", ConsoleColor.Red);
 

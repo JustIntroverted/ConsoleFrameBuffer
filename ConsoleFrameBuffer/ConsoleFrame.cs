@@ -5,7 +5,10 @@
     using System.Text;
     using Microsoft.Win32.SafeHandles;
 
-    public class RootFrame : IFrame, IDisposable {
+    public class ConsoleFrame : IDisposable {
+
+        #region protected variables
+
         protected CharInfo[] _buffer;
         protected short _bufferheight;
         protected short _bufferwidth;
@@ -19,9 +22,13 @@
         protected short _x;
         protected short _y;
 
-        public delegate void KeyPressedDelegate(VirtualKeys KeyPressed, ControlKeyState KeyModifiers);
+        #endregion protected variables
 
-        public delegate void KeyReleasedDelegate(VirtualKeys KeyReleased, ControlKeyState KeyModifiers);
+        #region delegates/events
+
+        public delegate void KeyPressedDelegate(VirtualKeys Key, ControlKeyState KeyModifiers);
+
+        public delegate void KeyReleasedDelegate(VirtualKeys Key, ControlKeyState KeyModifiers);
 
         public delegate void MouseButtonDoubleClickedDelegate(int X, int Y, VirtualKeys ButtonState);
 
@@ -47,6 +54,10 @@
 
         public event UpdateDelegate Update;
 
+        #endregion delegates/events
+
+        #region public variables
+
         public bool CursorVisible { get { return getCursorVisibility(); } }
         public int CursorX { get; set; }
         public int CursorY { get; set; }
@@ -55,11 +66,13 @@
         public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
         public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
 
-        public RootFrame() : this(0, 0, 80, 25) {
+        #endregion public variables
+
+        public ConsoleFrame() : this(0, 0, 80, 25) {
         }
 
-        // TODO 5: create a method to insure the handles are good to go
-        public RootFrame(int X, int Y, int Width, int Height) {
+        // TODO 5: create a check to insure the handles are good to go
+        public ConsoleFrame(int X, int Y, int Width, int Height) {
             // grabs the handle for the console window
             _hConsoleOut = APICall.CreateFile("CONOUT$", 0x40000000 | 0x80000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
             _hConsoleIn = APICall.CreateFile("CONIN$", 0x80000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
@@ -79,56 +92,35 @@
             };
         }
 
-        protected virtual void OnKeyPressed(VirtualKeys KeyPressed, ControlKeyState KeyModifiers) {
-            KeyPressedDelegate invoker = Key_Pressed;
-
-            invoker?.Invoke(KeyPressed, KeyModifiers);
+        public void OnKeyPressed(VirtualKeys Key, ControlKeyState KeyModifiers) {
+            Key_Pressed?.Invoke(Key, KeyModifiers);
         }
 
-        protected virtual void OnMouseClicked(int X, int Y, VirtualKeys ButtonState) {
-            MouseButtonClickedDelegate invoker = MouseButton_Clicked;
-
-            invoker?.Invoke(X, Y, ButtonState);
+        protected void OnKeyReleased(VirtualKeys Key, ControlKeyState KeyModifiers) {
+            Key_Released?.Invoke(Key, KeyModifiers);
         }
 
-        protected virtual void OnMouseMoved(int X, int Y) {
-            MouseMovedDelegate invoker = Mouse_Moved;
-
-            invoker?.Invoke(X, Y);
+        public void OnMouseClicked(int X, int Y, VirtualKeys ButtonState) {
+            MouseButton_Clicked?.Invoke(X, Y, ButtonState);
         }
 
-        protected virtual void OnMouseDoubleClicked(int X, int Y, VirtualKeys ButtonState) {
-            MouseButtonDoubleClickedDelegate invoker = MouseButton_DoubleClicked;
-
-            invoker?.Invoke(X, Y, ButtonState);
+        protected void OnMouseDoubleClicked(int X, int Y, VirtualKeys ButtonState) {
+            MouseButton_DoubleClicked?.Invoke(X, Y, ButtonState);
         }
 
-        protected virtual void OnKeyReleased(VirtualKeys KeyReleased, ControlKeyState KeyModifiers) {
-            KeyReleasedDelegate invoker = Key_Released;
-
-            invoker?.Invoke(KeyReleased, KeyModifiers);
+        protected void OnMouseMoved(int X, int Y) {
+            Mouse_Moved?.Invoke(X, Y);
         }
 
-        protected virtual void OnUpdate() {
-            UpdateDelegate invoker = Update;
-
-            invoker?.Invoke();
+        protected void OnUpdate() {
+            Update?.Invoke();
         }
 
-        protected virtual void OnRender() {
-            RenderDelegate invoker = Render;
-
-            invoker?.Invoke();
+        protected void OnRender() {
+            Render?.Invoke();
         }
 
         protected void getInput() {
-            // make sure we don't capture input if they don't use the built in events
-            if (Key_Pressed == null && Key_Released == null &&
-                Mouse_Moved == null && MouseButton_Clicked == null &&
-                MouseButton_DoubleClicked == null) {
-                return;
-            }
-
             uint read = 0;
             uint readEvents = 0;
 
@@ -147,38 +139,28 @@
                     switch (eventBuffer[i].EventType) {
                         case EventType.KEY_EVENT:
                             if (eventBuffer[i].KeyEvent.bKeyDown) {
-                                if (Key_Pressed != null) {
-                                    Key_Pressed(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
-                                }
+                                Key_Pressed?.Invoke(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
                             } else {
-                                if (Key_Released != null) {
-                                    Key_Released(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
-                                }
+                                Key_Released?.Invoke(eventBuffer[i].KeyEvent.wVirtualKeyCode, conState);
                             }
                             break;
 
                         case EventType.MOUSE_EVENT:
                             if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.MOUSE_MOVED) {
-                                if (Mouse_Moved != null) {
-                                    Mouse_Moved(eventBuffer[i].MouseEvent.dwMousePosition.X, eventBuffer[i].MouseEvent.dwMousePosition.Y);
-                                }
+                                Mouse_Moved?.Invoke(eventBuffer[i].MouseEvent.dwMousePosition.X, eventBuffer[i].MouseEvent.dwMousePosition.Y);
                             }
 
                             if (eventBuffer[i].MouseEvent.dwButtonState > 0) {
                                 if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.DOUBLE_CLICK) {
-                                    if (MouseButton_DoubleClicked != null) {
-                                        MouseButton_DoubleClicked(
-                                            eventBuffer[i].MouseEvent.dwMousePosition.X,
-                                            eventBuffer[i].MouseEvent.dwMousePosition.Y,
-                                            eventBuffer[i].MouseEvent.dwButtonState);
-                                    }
+                                    MouseButton_DoubleClicked?.Invoke(
+                                        eventBuffer[i].MouseEvent.dwMousePosition.X,
+                                        eventBuffer[i].MouseEvent.dwMousePosition.Y,
+                                        eventBuffer[i].MouseEvent.dwButtonState);
                                 } else {
-                                    if (MouseButton_Clicked != null) {
-                                        MouseButton_Clicked(
-                                            eventBuffer[i].MouseEvent.dwMousePosition.X,
-                                            eventBuffer[i].MouseEvent.dwMousePosition.Y,
-                                            eventBuffer[i].MouseEvent.dwButtonState);
-                                    }
+                                    MouseButton_Clicked?.Invoke(
+                                        eventBuffer[i].MouseEvent.dwMousePosition.X,
+                                        eventBuffer[i].MouseEvent.dwMousePosition.Y,
+                                        eventBuffer[i].MouseEvent.dwButtonState);
                                 }
                             }
                             break;
@@ -213,7 +195,7 @@
         /// </summary>
         /// <param name="src">Buffer frame to be copied.</param>
         /// <param name="dest">Buffer frame that will be copied over by the source buffer frame.</param>
-        public static void CopyBuffer(RootFrame src, RootFrame dest) {
+        public static void CopyBuffer(ConsoleFrame src, ConsoleFrame dest) {
             if (src == null || dest == null) return;
             if (src._buffer == null || dest._buffer == null) return;
 
