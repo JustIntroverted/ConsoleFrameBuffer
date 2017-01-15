@@ -225,12 +225,11 @@
         /// </summary>
         /// <returns>Returns input as a string.</returns>
         public string ReadLine() {
-            //TODO 9: probably shouldn't use the whole buffer space
-            int maxCount = Width * Height;
+            const int maxCount = 256;
             StringBuilder sb = new StringBuilder(maxCount);
             uint read = 0;
 
-            if (APICall.ReadConsole(_hConsoleIn, sb, (uint)maxCount, out read, IntPtr.Zero)) {
+            if (APICall.ReadConsole(_hConsoleIn, sb, maxCount, out read, IntPtr.Zero)) {
                 return sb.ToString(0, (int)read - 1);
             }
 

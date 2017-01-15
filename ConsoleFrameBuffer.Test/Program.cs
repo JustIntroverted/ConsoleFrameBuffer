@@ -43,13 +43,15 @@ namespace ConsoleFrameBuffer.Test {
             _rootBuffer.MouseButton_Clicked += _rootBuffer_MouseButton_Clicked;
             _rootBuffer.MouseButton_DoubleClicked += _rootBuffer_MouseButton_DoubleClicked;
 
-            using (ConsoleFrame frame = new ConsoleFrame(0, 0, _width, 10)) {
+            using (ConsoleFrame frame = new ConsoleFrame(0, 0, _width, 1)) {
                 frame.Write(0, 0, "Player Name: \n", ConsoleColor.White, ConsoleColor.Black, true);
                 frame.SetCursorVisibility(100, true);
                 frame.WriteBuffer();
 
                 while (string.IsNullOrWhiteSpace(_playerName)) {
-                    _playerName = frame.ReadLine().Trim();
+                    frame.SetCursorPosition(0, 1);
+                    string n = frame.ReadLine().Trim();
+                    _playerName = n.Length > 12 ? n.Substring(0, 12) : n;
                 }
 
                 Console.Title = "Player: " + _playerName;
