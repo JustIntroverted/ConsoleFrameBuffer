@@ -40,6 +40,11 @@ namespace ConsoleFrameBuffer.Test.Frames {
             _mapFrame = new ConsoleFrame(0, 5, WIDTH, HEIGHT - 11);
             _statsFrame = new ConsoleFrame(0, 0, WIDTH, 5);
 
+            // add the child frames
+            ChildFrames.Add(_logsFrame);
+            ChildFrames.Add(_mapFrame);
+            ChildFrames.Add(_statsFrame);
+
             // adjust the settings for the root frame
             SetConsoleTitle("ConsoleFrameBuffer.Test");
             SetCursorVisibility(1, false);
@@ -105,7 +110,6 @@ namespace ConsoleFrameBuffer.Test.Frames {
         private void RootFrame_Update() {
             if (_sw.Elapsed > _sample) {
                 _value = (float)(_frames / _sw.Elapsed.TotalSeconds);
-
                 _sw.Reset();
                 _sw.Start();
                 _frames = 0;
@@ -133,20 +137,19 @@ namespace ConsoleFrameBuffer.Test.Frames {
             _statsFrame.Write(2, 1, string.Format("x:{0} - y:{1} // rx:{2} - ry:{3} // rw:{4} - rh:{5} // cw:{6} - ch:{7}",
                 _player.X, _player.Y, X, Y, Width,
                 Height, Console.WindowWidth, Console.WindowHeight), ConsoleColor.White);
-            _statsFrame.Write(WIDTH - string.Format("fps: {0}", (int)_value).Length - 2, 1,
+            _statsFrame.Write(
+                WIDTH - string.Format("fps: {0}", (int)_value).Length - 2, 1,
                 string.Format("fps: {0}", (int)_value), ConsoleColor.Yellow);
 
             string help = "Use WASD to move '@' around.  Use ARROW KEYS to move the frame around.";
             _statsFrame.Write(WIDTH / 2 - (help.Length / 2), 3, help, ConsoleColor.White);
 
-            DrawMap();
+            drawMap();
             writeLogs();
 
             _mapFrame.Write(_player.X - _playerCamera.X, _player.Y - _playerCamera.Y, "@", ConsoleColor.Red);
 
-            CopyBuffer(_statsFrame, this);
-            CopyBuffer(_mapFrame, this);
-            CopyBuffer(_logsFrame, this);
+            RenderChildren();
 
             Write(_mousePos.X, _mousePos.Y, "#", ConsoleColor.Red);
 
@@ -180,8 +183,10 @@ namespace ConsoleFrameBuffer.Test.Frames {
                 // KEY: SHIFT + . = >
                 if (Key == VirtualKeys.OEMPeriod) {
                     if (_caveMap.DownFloorPosition == _player) {
-                        using (ConsoleFrame frame = new ConsoleFrame(5, 10, 50, 3)) {
-                            frame.Write(1, 1, "Do you wish to drop down a floor? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
+                        using (ConsoleFrame frame = new ConsoleFrame(0, 10, Width, 3)) {
+                            string msg = "Do you wish to drop down a floor? yes/no\n";
+                            frame.SetCursorVisibility(100, true);
+                            frame.Write((Width / 2) - (msg.Length / 2), 1, msg, ConsoleColor.White, ConsoleColor.DarkBlue, true);
                             frame.WriteBuffer();
 
                             VirtualKeys ans = frame.ReadAsVirtualKey();
@@ -193,6 +198,8 @@ namespace ConsoleFrameBuffer.Test.Frames {
                                 _caveMap.Generate(80, 80);
                                 _player = _caveMap.UpFloorPosition;
                             }
+
+                            frame.SetCursorVisibility(1, false);
                         }
                     }
                 }
@@ -202,8 +209,10 @@ namespace ConsoleFrameBuffer.Test.Frames {
                 KeyModifiers == ControlKeyState.RightCtrlPressed) {
                 // KEYS: CTRL + Q
                 if (Key == VirtualKeys.Q) {
-                    using (ConsoleFrame frame = new ConsoleFrame(5, 10, 50, 3)) {
-                        frame.Write(1, 1, "Are you sure you want to quit? yes/no\n", ConsoleColor.White, ConsoleColor.Black, true);
+                    using (ConsoleFrame frame = new ConsoleFrame(0, 10, Width, 3)) {
+                        string msg = "Are you sure you want to quit? yes/no\n";
+                        frame.SetCursorVisibility(100, true);
+                        frame.Write((Width / 2) - (msg.Length / 2), 1, msg, ConsoleColor.White, ConsoleColor.DarkBlue, true);
                         frame.WriteBuffer();
 
                         VirtualKeys ans = frame.ReadAsVirtualKey();
@@ -212,6 +221,8 @@ namespace ConsoleFrameBuffer.Test.Frames {
                             Stop();
                             _caveMap = null;
                         }
+
+                        frame.SetCursorVisibility(1, false);
                     }
                 }
             }
@@ -250,7 +261,7 @@ namespace ConsoleFrameBuffer.Test.Frames {
             addLog(string.Format("MouseButton DoubleClicked: X:{0},Y:{1} - {2}", X + _playerCamera.X, Y + _playerCamera.Y - 5, ButtonState.ToString()));
         }
 
-        private void DrawMap() {
+        private void drawMap() {
             if (_caveMap == null) return;
 
             for (int x = 0; x < _mapFrame.Width; x++) {

@@ -1,6 +1,7 @@
 ﻿namespace ConsoleFrameBuffer {
 
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Text;
     using Microsoft.Win32.SafeHandles;
@@ -47,6 +48,7 @@
         public int Width { get { return _bufferwidth; } protected set { _bufferwidth = (short)(value < 0 ? 0 : value); } }
         public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
         public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
+        public List<ConsoleFrame> ChildFrames = new List<ConsoleFrame>();
         #endregion public variables
 
         public ConsoleFrame() : this(0, 0, 80, 25) {
@@ -269,6 +271,7 @@
             while (_running) {
                 getInput();
                 OnUpdate();
+                //renderChildren();
                 OnRender();
             }
 
@@ -383,6 +386,12 @@
             bool result = APICall.GetConsoleCursorInfo(_hConsoleOut, out cci);
 
             return cci.bVisible;
+        }
+
+        public void RenderChildren() {
+            foreach (ConsoleFrame cf in ChildFrames) {
+                CopyBuffer(cf, this);
+            }
         }
 
         private void updateBufferPos() {
