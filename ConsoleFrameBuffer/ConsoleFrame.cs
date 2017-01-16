@@ -6,9 +6,7 @@
     using Microsoft.Win32.SafeHandles;
 
     public class ConsoleFrame : IDisposable {
-
         #region protected variables
-
         protected CharInfo[] _buffer;
         protected short _bufferheight;
         protected short _bufferwidth;
@@ -21,57 +19,34 @@
         protected int _tabStop;
         protected short _x;
         protected short _y;
-
         #endregion protected variables
 
         #region delegates/events
-
         public delegate void KeyPressedDelegate(VirtualKeys Key, ControlKeyState KeyModifiers);
-
         public delegate void KeyReleasedDelegate(VirtualKeys Key, ControlKeyState KeyModifiers);
-
         public delegate void MouseButtonDoubleClickedDelegate(int X, int Y, VirtualKeys ButtonState);
-
         public delegate void MouseButtonClickedDelegate(int X, int Y, VirtualKeys ButtonState);
-
         public delegate void MouseMovedDelegate(int X, int Y);
-
         public delegate void RenderDelegate();
-
         public delegate void UpdateDelegate();
 
         public event KeyPressedDelegate Key_Pressed;
-
         public event KeyReleasedDelegate Key_Released;
-
         public event MouseButtonDoubleClickedDelegate MouseButton_DoubleClicked;
-
         public event MouseButtonClickedDelegate MouseButton_Clicked;
-
         public event MouseMovedDelegate Mouse_Moved;
-
         public event RenderDelegate Render;
-
         public event UpdateDelegate Update;
-
         #endregion delegates/events
 
         #region public variables
-
         public bool CursorVisible { get { return getCursorVisibility(); } }
-
         public int CursorX { get; set; }
-
         public int CursorY { get; set; }
-
         public int Height { get { return _bufferheight; } protected set { _bufferheight = (short)(value < 0 ? 0 : value); } }
-
         public int Width { get { return _bufferwidth; } protected set { _bufferwidth = (short)(value < 0 ? 0 : value); } }
-
         public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
-
         public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
-
         #endregion public variables
 
         public ConsoleFrame() : this(0, 0, 80, 25) {

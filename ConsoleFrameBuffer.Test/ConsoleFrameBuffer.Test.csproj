@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Frames\RootFrame.cs" />
     <Compile Include="Mapping\CaveMap.cs" />
     <Compile Include="Mapping\Map.cs" />
     <Compile Include="Program.cs" />
