@@ -136,12 +136,12 @@ namespace ConsoleFrameBuffer.Test.Frames {
             _statsFrame.Write(WIDTH - 1, 1, "+");
             _statsFrame.Write(2, 1, string.Format("x:{0} - y:{1} // rx:{2} - ry:{3} // rw:{4} - rh:{5} // cw:{6} - ch:{7}",
                 _player.X, _player.Y, X, Y, Width,
-                Height, Console.WindowWidth, Console.WindowHeight), ConsoleColor.White);
+                Height, Width, Height), ConsoleColor.White);
             _statsFrame.Write(
                 WIDTH - string.Format("fps: {0}", (int)_value).Length - 2, 1,
                 string.Format("fps: {0}", (int)_value), ConsoleColor.Yellow);
 
-            string help = "Use WASD to move '@' around.  Use ARROW KEYS to move the frame around.";
+            string help = "Use WASD to move '@' around.  Use ARROW KEYS to move the map frame around.";
             _statsFrame.Write(WIDTH / 2 - (help.Length / 2), 3, help, ConsoleColor.White);
 
             drawMap();
@@ -161,6 +161,7 @@ namespace ConsoleFrameBuffer.Test.Frames {
         private void RootFrame_Key_Pressed(VirtualKeys Key, ControlKeyState KeyModifiers) {
             addLog("Key Pressed: " + (KeyModifiers > 0 ? (KeyModifiers.ToString() + " + " + Key.ToString()) : Key.ToString()));
 
+            // get player movement keys, then make sure the map is walkable
             if (Key == VirtualKeys.W &&
                 _caveMap.IsWalkable(_player.X, _player.Y - 1))
                 _player.Y--;
@@ -174,11 +175,23 @@ namespace ConsoleFrameBuffer.Test.Frames {
                 _caveMap.IsWalkable(_player.X - 1, _player.Y))
                 _player.X--;
 
+            // move the map frame around
+            if (Key == VirtualKeys.Up)
+                _mapFrame.Y--;
+            if (Key == VirtualKeys.Right)
+                _mapFrame.X++;
+            if (Key == VirtualKeys.Down)
+                _mapFrame.Y++;
+            if (Key == VirtualKeys.Left)
+                _mapFrame.X--;
+
+            // hide, or unhide the console cursor
             if (Key == VirtualKeys.Tab) {
                 SetCursorVisibility(1, !CursorVisible);
                 addLog("Cursor Visible: " + CursorVisible.ToString());
             }
 
+            // check to see if there's a downfloor.  if there is, generate a new map
             if (KeyModifiers == ControlKeyState.ShiftPressed) {
                 // KEY: SHIFT + . = >
                 if (Key == VirtualKeys.OEMPeriod) {
@@ -205,6 +218,7 @@ namespace ConsoleFrameBuffer.Test.Frames {
                 }
             }
 
+            // see if the player wants to quit
             if (KeyModifiers == ControlKeyState.LeftCtrlPressed ||
                 KeyModifiers == ControlKeyState.RightCtrlPressed) {
                 // KEYS: CTRL + Q

@@ -192,8 +192,12 @@
             if (src._buffer == null || dest._buffer == null) return;
 
             for (int i = 0; i < src._buffer.Length; i++) {
-                if (src._buffer[i].Char.AsciiChar > 0)
+                if (src._buffer[i].Char.AsciiChar > 0) {
+                    if (i + src._bufferwidth * src.Y > dest._bufferwidth * dest._bufferheight)
+                        break;
+
                     dest._buffer[i + src._bufferwidth * src.Y] = src._buffer[i];
+                }
             }
         }
 
@@ -271,7 +275,6 @@
             while (_running) {
                 getInput();
                 OnUpdate();
-                //renderChildren();
                 OnRender();
             }
 
@@ -371,6 +374,9 @@
         /// Draws the buffer frame to the console window.
         /// </summary>
         public void WriteBuffer() {
+            // Copies the child frames to the parent frame for "rendering"
+            //RenderChildren();
+
             // if the handle is valid, then go ahead and write to the console
             if (_hConsoleOut != null && !_hConsoleOut.IsInvalid) {
                 bool b = APICall.WriteConsoleOutput(_hConsoleOut, _buffer,
@@ -414,6 +420,8 @@
                 if (disposing) {
                     if (_hConsoleOut != null) { _hConsoleOut.Close(); _hConsoleOut.Dispose(); _hConsoleOut = null; }
                     if (_hConsoleIn != null) { _hConsoleIn.Close(); _hConsoleIn.Dispose(); _hConsoleIn = null; }
+                    if (_buffer != null) { _buffer = null; }
+                    if (ChildFrames != null) { ChildFrames.Clear(); ChildFrames = null; }
                 }
 
                 _disposed = true;
