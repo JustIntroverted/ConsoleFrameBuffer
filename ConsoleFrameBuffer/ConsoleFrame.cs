@@ -59,11 +59,17 @@
         #region public variables
 
         public bool CursorVisible { get { return getCursorVisibility(); } }
+
         public int CursorX { get; set; }
+
         public int CursorY { get; set; }
+
         public int Height { get { return _bufferheight; } protected set { _bufferheight = (short)(value < 0 ? 0 : value); } }
+
         public int Width { get { return _bufferwidth; } protected set { _bufferwidth = (short)(value < 0 ? 0 : value); } }
+
         public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
+
         public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
 
         #endregion public variables
@@ -147,7 +153,9 @@
 
                         case EventType.MOUSE_EVENT:
                             if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.MOUSE_MOVED) {
-                                Mouse_Moved?.Invoke(eventBuffer[i].MouseEvent.dwMousePosition.X, eventBuffer[i].MouseEvent.dwMousePosition.Y);
+                                Mouse_Moved?.Invoke(
+                                    eventBuffer[i].MouseEvent.dwMousePosition.X,
+                                    eventBuffer[i].MouseEvent.dwMousePosition.Y);
                             }
 
                             if (eventBuffer[i].MouseEvent.dwButtonState > 0) {
@@ -167,6 +175,13 @@
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Sets the title of the console window.
+        /// </summary>
+        public void SetConsoleTitle(string Title) {
+            APICall.SetConsoleTitle(Title);
         }
 
         /// <summary>
@@ -271,7 +286,7 @@
         }
 
         /// <summary>
-        /// Runs the Render and Update methods in a loop.
+        /// Runs getInput(), Update(), and Render() methods in a loop.
         /// </summary>
         public void Run() {
             _running = true;

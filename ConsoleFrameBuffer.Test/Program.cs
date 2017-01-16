@@ -13,37 +13,61 @@ using ConsoleFrameBuffer.Test.Utility;
 namespace ConsoleFrameBuffer.Test {
 
     internal class Program {
-        public static Random RandomNumber = new Random();
-        private static int _width = 80;
-        private static int _height = 25;
-        private static Stopwatch _sw = new Stopwatch();
-        private ConsoleFrame _bufferLogs = new ConsoleFrame(0, _height - 6, _width, 5);
-        private ConsoleFrame _bufferMap = new ConsoleFrame(0, 5, _width, _height - 11);
-        private ConsoleFrame _bufferStats = new ConsoleFrame(0, 0, _width, 5);
-        private CaveMap _caveMap = new CaveMap();
-        private long _frames;
+        // frame variables
+        private ConsoleFrame _rootFrame;
+        private ConsoleFrame _logsFrame;
+        private ConsoleFrame _mapFrame;
+        private ConsoleFrame _statsFrame;
+
+        // root frame width and height
+        private const int WIDTH = 80;
+        private const int HEIGHT = 25;
+
+        // list that will contain the logs displayed
         private List<string> _logs = new List<string>();
-        private Point _mousePos = new Point();
+
+        // fps variables
+        private Stopwatch _sw = new Stopwatch();
+        private TimeSpan _sample;
+        private long _frames;
+        private float _value;
+
+        // player variables
         private Point _player = new Point();
         private Camera _playerCamera = new Camera();
         private string _playerName = string.Empty;
-        private ConsoleFrame _rootBuffer = new ConsoleFrame(0, 0, _width, _height);
-        private TimeSpan _sample;
-        private float _value;
-        private Array colors = Enum.GetValues(typeof(ConsoleColor));
+        private Point _mousePos = new Point();
+
+        // map variable
+        private CaveMap _caveMap;
+
+        public static Random RandomNumber = new Random();
 
         public Program() {
-            Console.Clear();
+            // create the different frames we'll be using
+            _rootFrame = new ConsoleFrame(0, 0, WIDTH, HEIGHT);
+            _logsFrame = new ConsoleFrame(0, HEIGHT - 6, WIDTH, 5);
+            _mapFrame = new ConsoleFrame(0, 5, WIDTH, HEIGHT - 11);
+            _statsFrame = new ConsoleFrame(0, 0, WIDTH, 5);
 
-            _rootBuffer.Update += _rootBuffer_Update;
-            _rootBuffer.Render += _rootBuffer_Render;
-            _rootBuffer.Key_Pressed += _rootBuffer_Key_Pressed;
-            _rootBuffer.Key_Released += _rootBuffer_Key_Released;
-            _rootBuffer.Mouse_Moved += _rootBuffer_Mouse_Moved;
-            _rootBuffer.MouseButton_Clicked += _rootBuffer_MouseButton_Clicked;
-            _rootBuffer.MouseButton_DoubleClicked += _rootBuffer_MouseButton_DoubleClicked;
+            // adjust the settings for the root frame
+            _rootFrame.SetConsoleTitle("ConsoleFrameBuffer.Test");
+            _rootFrame.SetCursorVisibility(1, false);
 
-            using (ConsoleFrame frame = new ConsoleFrame(0, 0, _width, 1)) {
+            // clear it
+            _rootFrame.Clear();
+
+            // create events for the root frame
+            _rootFrame.Update += _rootBuffer_Update;
+            _rootFrame.Render += _rootBuffer_Render;
+            _rootFrame.Key_Pressed += _rootBuffer_Key_Pressed;
+            _rootFrame.Key_Released += _rootBuffer_Key_Released;
+            _rootFrame.Mouse_Moved += _rootBuffer_Mouse_Moved;
+            _rootFrame.MouseButton_Clicked += _rootBuffer_MouseButton_Clicked;
+            _rootFrame.MouseButton_DoubleClicked += _rootBuffer_MouseButton_DoubleClicked;
+
+            // get the player's name by creating a temporary frame that'll use ReadLine()
+            using (ConsoleFrame frame = new ConsoleFrame(0, 0, WIDTH, 2)) {
                 frame.Write(0, 0, "Player Name: \n", ConsoleColor.White, ConsoleColor.Black, true);
                 frame.SetCursorVisibility(100, true);
                 frame.WriteBuffer();
@@ -54,40 +78,44 @@ namespace ConsoleFrameBuffer.Test {
                     _playerName = n.Length > 12 ? n.Substring(0, 12) : n;
                 }
 
-                Console.Title = "Player: " + _playerName;
+                frame.SetConsoleTitle("Player: " + _playerName);
 
                 frame.Clear();
-                frame.SetCursorVisibility(0, false);
+                frame.SetCursorVisibility(1, false);
                 frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
                 frame.WriteBuffer();
             }
 
+            // generate a cave-like map
+            _caveMap = new CaveMap();
             _caveMap.Generate(80, 80);
 
-            _player.X = _caveMap.UpFloorPosition.X;
-            _player.Y = _caveMap.UpFloorPosition.Y;
+            // set the players position on the map, then adjust the camera
+            _player = _caveMap.UpFloorPosition;
+            _playerCamera.FixCamera(_player, _mapFrame.Width, _mapFrame.Height - 5);
 
-            _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height - 5);
-
+            // set the variables for fps count
             _sample = TimeSpan.FromSeconds(1);
             _value = 0;
             _frames = 0;
             _sw = Stopwatch.StartNew();
 
-            _rootBuffer.Run();
+            // start the loop for the root frame
+            _rootFrame.Run();
 
-            _bufferMap.Dispose();
-            _bufferStats.Dispose();
-            _bufferLogs.Dispose();
-            _rootBuffer.Dispose();
+            // dispose of the frames when the loop ends
+            _mapFrame.Dispose();
+            _statsFrame.Dispose();
+            _logsFrame.Dispose();
 
-            Console.Clear();
+            // clear the root frame
+            _rootFrame.Clear();
+
+            // now dispose of the root frame
+            _rootFrame.Dispose();
         }
 
         private static void Main(string[] args) {
-            Console.Title = "ConsoleFrameBuffer.Test";
-            Console.CursorVisible = false;
-
             Program prog = new Program();
         }
 
@@ -108,8 +136,8 @@ namespace ConsoleFrameBuffer.Test {
                 _player.X--;
 
             if (Key == VirtualKeys.Tab) {
-                _rootBuffer.SetCursorVisibility(1, !_rootBuffer.CursorVisible);
-                addLog("Cursor Visible: " + _rootBuffer.CursorVisible.ToString());
+                _rootFrame.SetCursorVisibility(1, !_rootFrame.CursorVisible);
+                addLog("Cursor Visible: " + _rootFrame.CursorVisible.ToString());
             }
 
             if (KeyModifers == ControlKeyState.ShiftPressed) {
@@ -145,7 +173,7 @@ namespace ConsoleFrameBuffer.Test {
                         VirtualKeys ans = frame.ReadAsVirtualKey();
 
                         if (ans == VirtualKeys.Y) {
-                            _rootBuffer.Stop();
+                            _rootFrame.Stop();
                             _caveMap = null;
                             Program prog = new Program();
                         }
@@ -188,39 +216,39 @@ namespace ConsoleFrameBuffer.Test {
         }
 
         private void _rootBuffer_Render() {
-            _rootBuffer.Clear();
-            _bufferStats.Clear();
-            _bufferMap.Clear();
-            _bufferLogs.Clear();
+            _rootFrame.Clear();
+            _statsFrame.Clear();
+            _mapFrame.Clear();
+            _logsFrame.Clear();
 
-            for (int i = 0; i < _width; i++) {
-                _bufferStats.Write(i, 0, "=");
-                _bufferStats.Write(i, 2, "=");
+            for (int i = 0; i < WIDTH; i++) {
+                _statsFrame.Write(i, 0, "=");
+                _statsFrame.Write(i, 2, "=");
             }
 
-            _bufferStats.Write(0, 1, "+");
-            _bufferStats.Write(_width - 1, 1, "+");
-            _bufferStats.Write(2, 1, string.Format("x:{0} - y:{1} // rx:{2} - ry:{3} // rw:{4} - rh:{5} // cw:{6} - ch:{7}",
-                _player.X, _player.Y, _rootBuffer.X, _rootBuffer.Y, _rootBuffer.Width,
-                _rootBuffer.Height, Console.WindowWidth, Console.WindowHeight), ConsoleColor.White);
-            _bufferStats.Write(_width - string.Format("fps: {0}", (int)_value).Length - 2, 1,
+            _statsFrame.Write(0, 1, "+");
+            _statsFrame.Write(WIDTH - 1, 1, "+");
+            _statsFrame.Write(2, 1, string.Format("x:{0} - y:{1} // rx:{2} - ry:{3} // rw:{4} - rh:{5} // cw:{6} - ch:{7}",
+                _player.X, _player.Y, _rootFrame.X, _rootFrame.Y, _rootFrame.Width,
+                _rootFrame.Height, Console.WindowWidth, Console.WindowHeight), ConsoleColor.White);
+            _statsFrame.Write(WIDTH - string.Format("fps: {0}", (int)_value).Length - 2, 1,
                 string.Format("fps: {0}", (int)_value), ConsoleColor.Yellow);
 
             string help = "Use WASD to move '@' around.  Use ARROW KEYS to move the frame around.";
-            _bufferStats.Write(_width / 2 - (help.Length / 2), 3, help, ConsoleColor.White);
+            _statsFrame.Write(WIDTH / 2 - (help.Length / 2), 3, help, ConsoleColor.White);
 
             DrawMap();
             writeLogs();
 
-            _bufferMap.Write(_player.X - _playerCamera.X, _player.Y - _playerCamera.Y, "@", ConsoleColor.Red);
+            _mapFrame.Write(_player.X - _playerCamera.X, _player.Y - _playerCamera.Y, "@", ConsoleColor.Red);
 
-            ConsoleFrame.CopyBuffer(_bufferStats, _rootBuffer);
-            ConsoleFrame.CopyBuffer(_bufferMap, _rootBuffer);
-            ConsoleFrame.CopyBuffer(_bufferLogs, _rootBuffer);
+            ConsoleFrame.CopyBuffer(_statsFrame, _rootFrame);
+            ConsoleFrame.CopyBuffer(_mapFrame, _rootFrame);
+            ConsoleFrame.CopyBuffer(_logsFrame, _rootFrame);
 
-            _rootBuffer.Write(_mousePos.X, _mousePos.Y, "#", ConsoleColor.Red);
+            _rootFrame.Write(_mousePos.X, _mousePos.Y, "#", ConsoleColor.Red);
 
-            _rootBuffer.WriteBuffer();
+            _rootFrame.WriteBuffer();
 
             _frames++;
         }
@@ -235,7 +263,7 @@ namespace ConsoleFrameBuffer.Test {
             }
 
             _caveMap.ComputeFOV(_player);
-            _playerCamera.FixCamera(_player, _bufferMap.Width, _bufferMap.Height - 5);
+            _playerCamera.FixCamera(_player, _mapFrame.Width, _mapFrame.Height - 5);
         }
 
         private void addLog(string log) {
@@ -243,29 +271,25 @@ namespace ConsoleFrameBuffer.Test {
         }
 
         private void DrawMap() {
-            for (int x = 0; x < _bufferMap.Width; x++) {
-                for (int y = 0; y < _bufferMap.Height; y++) {
+            for (int x = 0; x < _mapFrame.Width; x++) {
+                for (int y = 0; y < _mapFrame.Height; y++) {
                     if (!_caveMap.IsOutOfBounds(x + _playerCamera.X, y + _playerCamera.Y)) {
                         Tile tmpTile = _caveMap.Tiles[x + _playerCamera.X, y + _playerCamera.Y];
 
                         if (tmpTile.IsVisible) {
-                            _bufferMap.Write(x, y, tmpTile.ID, tmpTile.ForegroundColor, tmpTile.BackgroundColor);
+                            _mapFrame.Write(x, y, tmpTile.ID, tmpTile.ForegroundColor, tmpTile.BackgroundColor);
                         } else if (tmpTile.IsExplored) {
-                            _bufferMap.Write(x, y, tmpTile.ID, Tile.DarkenTile(tmpTile.ForegroundColor), Tile.DarkenTile(tmpTile.BackgroundColor));
+                            _mapFrame.Write(x, y, tmpTile.ID, Tile.DarkenTile(tmpTile.ForegroundColor), Tile.DarkenTile(tmpTile.BackgroundColor));
                         }
                     }
                 }
             }
         }
 
-        private ConsoleColor RandomColor() {
-            return (ConsoleColor)colors.GetValue(RandomNumber.Next(0, colors.Length));
-        }
-
         private void writeLogs() {
-            for (int i = 0; i < _bufferLogs.Height; i++) {
+            for (int i = 0; i < _logsFrame.Height; i++) {
                 if (i < _logs.Count)
-                    _bufferLogs.Write(1, (_bufferLogs.Height - 1) - i, _logs[i], ConsoleColor.White);
+                    _logsFrame.Write(1, (_logsFrame.Height - 1) - i, _logs[i], ConsoleColor.White);
             }
         }
     }

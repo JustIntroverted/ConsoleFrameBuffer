@@ -824,6 +824,10 @@
             uint uCode,
             uint uMapType);
 
+        [DllImport("kernel32.dll")]
+        public static extern bool SetConsoleTitle(
+            string lpConsoleTitle);
+
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern bool ReadConsole(
             SafeFileHandle hConsoleInput,
