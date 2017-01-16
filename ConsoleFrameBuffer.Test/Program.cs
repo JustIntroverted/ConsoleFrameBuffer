@@ -37,9 +37,9 @@ namespace ConsoleFrameBuffer.Test {
 
             _rootBuffer.Update += _rootBuffer_Update;
             _rootBuffer.Render += _rootBuffer_Render;
-            _rootBuffer.Key_Pressed += _rootBuffer_KeyPressed;
-            _rootBuffer.Key_Released += _rootBuffer_KeyReleased;
-            _rootBuffer.Mouse_Moved += _rootBuffer_MouseMoved;
+            _rootBuffer.Key_Pressed += _rootBuffer_Key_Pressed;
+            _rootBuffer.Key_Released += _rootBuffer_Key_Released;
+            _rootBuffer.Mouse_Moved += _rootBuffer_Mouse_Moved;
             _rootBuffer.MouseButton_Clicked += _rootBuffer_MouseButton_Clicked;
             _rootBuffer.MouseButton_DoubleClicked += _rootBuffer_MouseButton_DoubleClicked;
 
@@ -91,7 +91,7 @@ namespace ConsoleFrameBuffer.Test {
             Program prog = new Program();
         }
 
-        private void _rootBuffer_KeyPressed(VirtualKeys Key, ControlKeyState KeyModifers) {
+        private void _rootBuffer_Key_Pressed(VirtualKeys Key, ControlKeyState KeyModifers) {
             addLog("Key Pressed: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + Key.ToString()) : Key.ToString()));
 
             if (Key == VirtualKeys.W &&
@@ -146,17 +146,19 @@ namespace ConsoleFrameBuffer.Test {
 
                         if (ans == VirtualKeys.Y) {
                             _rootBuffer.Stop();
+                            _caveMap = null;
+                            Program prog = new Program();
                         }
                     }
                 }
             }
         }
 
-        private void _rootBuffer_KeyReleased(VirtualKeys Key, ControlKeyState KeyModifers) {
+        private void _rootBuffer_Key_Released(VirtualKeys Key, ControlKeyState KeyModifers) {
             addLog("Key Released: " + (KeyModifers > 0 ? (KeyModifers.ToString() + " + " + Key.ToString()) : Key.ToString()));
         }
 
-        private void _rootBuffer_MouseMoved(int X, int Y) {
+        private void _rootBuffer_Mouse_Moved(int X, int Y) {
             _mousePos.X = X;
             _mousePos.Y = Y;
         }

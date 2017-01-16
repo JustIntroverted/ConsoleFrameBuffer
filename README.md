@@ -9,33 +9,38 @@ from clearing the screen.
 
 ```
 #!c#
-using ConsoleFrameBuffer;
 using System;
+using ConsoleFrameBuffer;
 
 namespace YourProject {
 
     internal class Program {
 
-        // width and height for the buffer frame
-        private const int _width = 80;
-        private const int _height = 25;
+        // width and height for the frame
+        private const int WIDTH = 80;
+        private const int HEIGHT = 25;
 
-        // create new buffer frame
-        private RootFrameBuffer _rootBuffer = new RootFrameBuffer(0, 0, _width, _height);
+        // declare new frame
+        private ConsoleFrame _rootFrame;
 
         // player variables
-        private int _playerX = 0;
-        private int _playerY = 0;
+        private int _playerX, _playerY = 0;
         private string _playerID = "@";
 
         public Program() {
-            // create the events for the buffer
-            _rootBuffer.Update += _rootBuffer_Update;
-            _rootBuffer.Render += _rootBuffer_Render;
-            _rootBuffer.Key_Pressed += _rootBuffer_Key_Pressed;
+            // create new frame
+            _rootFrame = new ConsoleFrame(0, 0, WIDTH, HEIGHT);
 
-            // run the buffer's update and render events in a loop
-            _rootBuffer.Run();
+            // adjust some settings for the frame
+            _rootFrame.SetCursorVisibility(1, false);
+
+            // create the events for the frame
+            _rootFrame.Update += _rootFrame_Update;
+            _rootFrame.Render += _rootFrame_Render;
+            _rootFrame.Key_Pressed += _rootFrame_Key_Pressed;
+
+            // run the frame's update and render events in a loop
+            _rootFrame.Run();
 
             // clears the console window after running Stop()
             // only really needed if you're running the exe
@@ -44,46 +49,39 @@ namespace YourProject {
             Console.Clear();
         }
 
-        private void _rootBuffer_Key_Pressed(VirtualKeys KeyPressed, ControlKeyState KeyModifiers) {
+        private void _rootFrame_Key_Pressed(VirtualKeys Key, ControlKeyState KeyModifiers) {
             // moves the "@" around the screen
-            if (KeyPressed == VirtualKeys.W)
+            if (Key == VirtualKeys.W)
                 _playerY--;
-            if (KeyPressed == VirtualKeys.D)
+            if (Key == VirtualKeys.D)
                 _playerX++;
-            if (KeyPressed == VirtualKeys.S)
+            if (Key == VirtualKeys.S)
                 _playerY++;
-            if (KeyPressed == VirtualKeys.A)
+            if (Key == VirtualKeys.A)
                 _playerX--;
 
             // ends the program
-            if (KeyPressed == VirtualKeys.Escape)
-                _rootBuffer.Stop();
+            if (Key == VirtualKeys.Escape)
+                _rootFrame.Stop();
         }
 
-        private void _rootBuffer_Update() {
+        private void _rootFrame_Update() {
             // maybe some game logic here?
         }
 
-        private void _rootBuffer_Render() {
+        private void _rootFrame_Render() {
             // clear the buffer frame
-            _rootBuffer.Clear();
+            _rootFrame.Clear();
 
             // write the player data to the buffer frame
-            _rootBuffer.Write(_playerX, _playerY, _playerID, ConsoleColor.Cyan);
+            _rootFrame.Write(_playerX, _playerY, _playerID, ConsoleColor.Cyan);
 
             // finally, draw/write the buffer frame to the console window
-            _rootBuffer.WriteBuffer();
+            _rootFrame.WriteBuffer();
         }
 
         private static void Main(string[] args) {
             Console.Title = "New Console Game Project!";
-
-            Console.BufferWidth = _width;
-            Console.BufferHeight = _height;
-            Console.WindowWidth = _width;
-            Console.WindowHeight = _height;
-
-            Console.CursorVisible = false;
 
             Program prog = new Program();
         }
