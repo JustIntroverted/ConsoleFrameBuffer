@@ -1,9 +1,6 @@
 # **Description:** #
 
-Allows you to write to the console window at a much faster rate by way of PInvoke.  
-For example, if you wanted to make a game using the C# console window, 
-then this would allow you to do so without all the flickering you get 
-from clearing the screen.
+Allows you to write to the console window at a much faster rate.  If you wanted to make a game (e.g., roguelike) using the C# console window, then this would allow you to do so without all the flickering you get from clearing the screen.
 
 # **Setting Up Your Own Project:** #
 
