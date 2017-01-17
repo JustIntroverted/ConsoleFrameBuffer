@@ -19,12 +19,6 @@ namespace ConsoleFrameBuffer.Test.Frames {
         // list that will contain the logs displayed
         private List<string> _logs = new List<string>();
 
-        // fps variables
-        private Stopwatch _sw = new Stopwatch();
-        private TimeSpan _sample;
-        private long _frames;
-        private float _value;
-
         // player variables
         private Point _player = new Point();
         private Camera _playerCamera = new Camera();
@@ -37,13 +31,13 @@ namespace ConsoleFrameBuffer.Test.Frames {
         public RootFrame() {
             // create the different frames we'll be using
             _logsFrame = new ConsoleFrame(0, HEIGHT - 6, WIDTH, 5);
-            _mapFrame = new ConsoleFrame(0, 5, WIDTH, HEIGHT - 11);
             _statsFrame = new ConsoleFrame(0, 0, WIDTH, 5);
+            _mapFrame = new ConsoleFrame(0, 5, WIDTH, HEIGHT - 11);
 
             // add the child frames
             ChildFrames.Add(_logsFrame);
-            ChildFrames.Add(_mapFrame);
             ChildFrames.Add(_statsFrame);
+            ChildFrames.Add(_mapFrame);
 
             // adjust the settings for the root frame
             SetConsoleTitle("ConsoleFrameBuffer.Test");
@@ -86,12 +80,6 @@ namespace ConsoleFrameBuffer.Test.Frames {
             _player = _caveMap.UpFloorPosition;
             _playerCamera.FixCamera(_player, _mapFrame.Width, _mapFrame.Height - 5);
 
-            // set the variables for fps count
-            _sample = TimeSpan.FromSeconds(1);
-            _value = 0;
-            _frames = 0;
-            _sw = Stopwatch.StartNew();
-
             // start the loop for the root frame
             Run();
 
@@ -108,13 +96,6 @@ namespace ConsoleFrameBuffer.Test.Frames {
         }
 
         private void RootFrame_Update() {
-            if (_sw.Elapsed > _sample) {
-                _value = (float)(_frames / _sw.Elapsed.TotalSeconds);
-                _sw.Reset();
-                _sw.Start();
-                _frames = 0;
-            }
-
             if (_caveMap != null)
                 _caveMap.ComputeFOV(_player);
 
@@ -138,8 +119,8 @@ namespace ConsoleFrameBuffer.Test.Frames {
                 _player.X, _player.Y, X, Y, Width,
                 Height, Width, Height), ConsoleColor.White);
             _statsFrame.Write(
-                WIDTH - string.Format("fps: {0}", (int)_value).Length - 2, 1,
-                string.Format("fps: {0}", (int)_value), ConsoleColor.Yellow);
+                WIDTH - string.Format("fps: {0}", FPS).Length - 2, 1,
+                string.Format("fps: {0}", FPS), ConsoleColor.Yellow);
 
             string help = "Use WASD to move '@' around.  Use ARROW KEYS to move the map frame around.";
             _statsFrame.Write(WIDTH / 2 - (help.Length / 2), 3, help, ConsoleColor.White);
@@ -148,14 +129,7 @@ namespace ConsoleFrameBuffer.Test.Frames {
             writeLogs();
 
             _mapFrame.Write(_player.X - _playerCamera.X, _player.Y - _playerCamera.Y, "@", ConsoleColor.Red);
-
-            RenderChildren();
-
-            Write(_mousePos.X, _mousePos.Y, "#", ConsoleColor.Red);
-
-            WriteBuffer();
-
-            _frames++;
+            _mapFrame.Write(_mousePos.X - _mapFrame.X, _mousePos.Y - _mapFrame.Y, "#", ConsoleColor.Red);
         }
 
         private void RootFrame_Key_Pressed(VirtualKeys Key, ControlKeyState KeyModifiers) {

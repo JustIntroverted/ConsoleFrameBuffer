@@ -2,6 +2,7 @@
 
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Text;
     using Microsoft.Win32.SafeHandles;
@@ -21,6 +22,14 @@
         protected short _x;
         protected short _y;
         #endregion protected variables
+
+        #region private variables
+        // fps variables
+        private Stopwatch _sw = new Stopwatch();
+        private TimeSpan _sample;
+        private long _frames;
+        private float _value;
+        #endregion private variables
 
         #region delegates/events
         public delegate void KeyPressedDelegate(VirtualKeys Key, ControlKeyState KeyModifiers);
@@ -48,6 +57,7 @@
         public int Width { get { return _bufferwidth; } protected set { _bufferwidth = (short)(value < 0 ? 0 : value); } }
         public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
         public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
+        public int FPS { get { return (int)_value; } }
         public List<ConsoleFrame> ChildFrames = new List<ConsoleFrame>();
         #endregion public variables
 
@@ -270,15 +280,35 @@
         /// Runs getInput(), Update(), and Render() methods in a loop.
         /// </summary>
         public void Run() {
+            // set the variables for fps count
+            _sample = TimeSpan.FromSeconds(1);
+            _value = 0;
+            _frames = 0;
+            _sw = Stopwatch.StartNew();
+
             _running = true;
 
             while (_running) {
+                getFPS();
                 getInput();
                 OnUpdate();
                 OnRender();
+                RenderChildren();
+                WriteBuffer();
+
+                _frames++;
             }
 
             Dispose();
+        }
+
+        private void getFPS() {
+            if (_sw.Elapsed > _sample) {
+                _value = (float)(_frames / _sw.Elapsed.TotalSeconds);
+                _sw.Reset();
+                _sw.Start();
+                _frames = 0;
+            }
         }
 
         /// <summary>
@@ -371,7 +401,8 @@
         }
 
         /// <summary>
-        /// Draws the buffer frame to the console window.
+        /// Draws the frame to the console window.  This is only needed if you aren't using Run() to
+        /// automatically call the WriteBuffer() method.
         /// </summary>
         public void WriteBuffer() {
             // Copies the child frames to the parent frame for "rendering"
