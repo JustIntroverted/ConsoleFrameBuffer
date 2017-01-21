@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using ConsoleFrameBuffer.Test.Mapping;
 using ConsoleFrameBuffer.Test.Utility;
 

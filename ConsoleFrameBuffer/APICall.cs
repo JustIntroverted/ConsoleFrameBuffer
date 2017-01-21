@@ -50,7 +50,6 @@
 
     public enum VirtualKeys
         : ushort {
-
         /// <summary></summary>
         LeftButton = 0x01,
 
@@ -642,7 +641,6 @@
 
     [StructLayout(LayoutKind.Explicit)]
     public struct CharInfo {
-
         [FieldOffset(0)]
         public CharUnion Char;
 
@@ -652,7 +650,6 @@
 
     [StructLayout(LayoutKind.Explicit)]
     public struct CharUnion {
-
         [FieldOffset(0)]
         public char UnicodeChar;
 
@@ -692,7 +689,6 @@
 
     [StructLayout(LayoutKind.Explicit)]
     public struct INPUT_RECORD {
-
         [FieldOffset(0)]
         public EventType EventType;
 
@@ -714,7 +710,6 @@
 
     [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
     public struct KEY_EVENT_RECORD {
-
         [FieldOffset(0), MarshalAs(UnmanagedType.Bool)]
         public bool bKeyDown;
 
@@ -741,7 +736,6 @@
 
     [StructLayout(LayoutKind.Explicit)]
     public struct MOUSE_EVENT_RECORD {
-
         [FieldOffset(0)]
         public Coord dwMousePosition;
 
@@ -775,7 +769,6 @@
     #endregion Structs/Enums
 
     public static class APICall {
-
         #region DLL Imports
 
         [DllImport("msvcrt.dll")]

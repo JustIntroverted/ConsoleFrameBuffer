@@ -203,10 +203,10 @@
 
             for (int i = 0; i < src._buffer.Length; i++) {
                 if (src._buffer[i].Char.AsciiChar > 0) {
-                    if (i + src._bufferwidth * src.Y > dest._bufferwidth * dest._bufferheight)
+                    if (i + src.X + src._bufferwidth * src.Y > dest._bufferwidth * dest._bufferheight)
                         break;
 
-                    dest._buffer[i + src._bufferwidth * src.Y] = src._buffer[i];
+                    dest._buffer[i + src.X + src._bufferwidth * src.Y] = src._buffer[i];
                 }
             }
         }
