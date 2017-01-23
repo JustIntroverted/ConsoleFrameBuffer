@@ -30,7 +30,7 @@ namespace ConsoleFrameBuffer.Test.Frames {
         public RootFrame() {
             // create the different frames we'll be using
             _logsFrame = new ConsoleFrame(0, HEIGHT - 6, WIDTH, 5);
-            _statsFrame = new ConsoleFrame(0, 0, WIDTH, 5);
+            _statsFrame = new ConsoleFrame(0, 0, 20, 5);
             _mapFrame = new ConsoleFrame(0, 5, WIDTH, HEIGHT - 11);
 
             // add the child frames

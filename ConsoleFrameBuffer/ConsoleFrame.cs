@@ -7,6 +7,10 @@
     using System.Text;
     using Microsoft.Win32.SafeHandles;
 
+    public enum MouseWheeled {
+        Up, Down
+    }
+
     public class ConsoleFrame : IDisposable {
         #region protected variables
         protected CharInfo[] _buffer;
@@ -32,11 +36,13 @@
         #endregion private variables
 
         #region delegates/events
+
         public delegate void KeyPressedDelegate(VirtualKeys Key, ControlKeyState KeyModifiers);
         public delegate void KeyReleasedDelegate(VirtualKeys Key, ControlKeyState KeyModifiers);
         public delegate void MouseButtonDoubleClickedDelegate(int X, int Y, VirtualKeys ButtonState);
         public delegate void MouseButtonClickedDelegate(int X, int Y, VirtualKeys ButtonState);
         public delegate void MouseMovedDelegate(int X, int Y);
+        public delegate void MouseWheeledDelegate(MouseWheeled Direction);
         public delegate void RenderDelegate();
         public delegate void UpdateDelegate();
 
@@ -45,6 +51,7 @@
         public event MouseButtonDoubleClickedDelegate MouseButton_DoubleClicked;
         public event MouseButtonClickedDelegate MouseButton_Clicked;
         public event MouseMovedDelegate Mouse_Moved;
+        public event MouseWheeledDelegate Mouse_Wheeled;
         public event RenderDelegate Render;
         public event UpdateDelegate Update;
         #endregion delegates/events
@@ -85,34 +92,6 @@
             };
         }
 
-        protected void OnKeyPressed(VirtualKeys Key, ControlKeyState KeyModifiers) {
-            Key_Pressed?.Invoke(Key, KeyModifiers);
-        }
-
-        protected void OnKeyReleased(VirtualKeys Key, ControlKeyState KeyModifiers) {
-            Key_Released?.Invoke(Key, KeyModifiers);
-        }
-
-        protected void OnMouseClicked(int X, int Y, VirtualKeys ButtonState) {
-            MouseButton_Clicked?.Invoke(X, Y, ButtonState);
-        }
-
-        protected void OnMouseDoubleClicked(int X, int Y, VirtualKeys ButtonState) {
-            MouseButton_DoubleClicked?.Invoke(X, Y, ButtonState);
-        }
-
-        protected void OnMouseMoved(int X, int Y) {
-            Mouse_Moved?.Invoke(X, Y);
-        }
-
-        protected void OnUpdate() {
-            Update?.Invoke();
-        }
-
-        protected void OnRender() {
-            Render?.Invoke();
-        }
-
         protected void getInput() {
             uint read = 0;
             uint readEvents = 0;
@@ -145,6 +124,18 @@
                                     eventBuffer[i].MouseEvent.dwMousePosition.Y);
                             }
 
+                            if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.MOUSE_WHEELED) {
+                                MouseWheeled dir;
+
+                                if (eventBuffer[i].MouseEvent.dwButtonState > 0)
+                                    dir = MouseWheeled.Up;
+                                else
+                                    dir = MouseWheeled.Down;
+
+                                Mouse_Wheeled?.Invoke(
+                                    dir);
+                            }
+
                             if (eventBuffer[i].MouseEvent.dwButtonState > 0) {
                                 if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.DOUBLE_CLICK) {
                                     MouseButton_DoubleClicked?.Invoke(
@@ -158,6 +149,7 @@
                                         eventBuffer[i].MouseEvent.dwButtonState);
                                 }
                             }
+
                             break;
                     }
                 }
@@ -291,12 +283,14 @@
             while (_running) {
                 getFPS();
                 getInput();
-                OnUpdate();
-                OnRender();
+                Update?.Invoke();
+                Render?.Invoke();
                 RenderChildren();
                 WriteBuffer();
 
                 _frames++;
+
+                System.Threading.Thread.Sleep(1);
             }
 
             Dispose();
@@ -387,11 +381,20 @@
 
                         if (j < 0) return;
 
+                        //if (x + i > Width) {
+                        //    if (y + i > Height)
+                        //        break;
+
+                        //    y++;
+                        //    x = 0;
+                        //}
+
                         if (j < _buffer.Length) {
                             _buffer[j].Attributes = (short)((short)ForegroundColor | (short)((short)BackgroundColor * 0x0010));
                             _buffer[j].Char.AsciiChar = (byte)Text[i];
                             x++;
                         }
+
                         break;
                 }
             }
