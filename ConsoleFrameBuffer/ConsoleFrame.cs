@@ -193,13 +193,19 @@
             if (src == null || dest == null) return;
             if (src._buffer == null || dest._buffer == null) return;
 
-            for (int i = 0; i < src._buffer.Length; i++) {
-                if (src._buffer[i].Char.AsciiChar > 0) {
-                    if (i + src.X + src._bufferwidth * src.Y > dest._bufferwidth * dest._bufferheight)
-                        break;
+            CharInfo charinfo;
 
-                    dest._buffer[i + src.X + src._bufferwidth * src.Y] = src._buffer[i];
-                }
+            int x, y = 0;
+            for (int i = 0; i < src._buffer.Length; i++) {
+                x = i % src._bufferwidth;
+                y = i / src._bufferwidth;
+
+                if (x + src.X + 1 > dest._bufferwidth || y + src.Y + 1 > dest._bufferheight)
+                    continue;
+
+                charinfo = src._buffer[x + src._bufferwidth * y];
+
+                dest._buffer[(x + src.X) + dest._bufferwidth * (y + src.Y)] = charinfo;
             }
         }
 
