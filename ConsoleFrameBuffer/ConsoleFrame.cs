@@ -296,7 +296,7 @@
 
                 _frames++;
 
-                System.Threading.Thread.Sleep(1);
+                //System.Threading.Thread.Sleep(1);
             }
 
             Dispose();
@@ -385,19 +385,15 @@
                     default:
                         int j = (y + Y) * _bufferwidth + (x + X);
 
-                        if (j < 0) return;
-
-                        //if (x + i > Width) {
-                        //    if (y + i > Height)
-                        //        break;
-
-                        //    y++;
-                        //    x = 0;
-                        //}
+                        if (j < 0) break;
 
                         if (j < _buffer.Length) {
+                            if ((x + X + 1) > _bufferwidth || (y + Y + 1) > _bufferheight)
+                                break;
+
                             _buffer[j].Attributes = (short)((short)ForegroundColor | (short)((short)BackgroundColor * 0x0010));
                             _buffer[j].Char.AsciiChar = (byte)Text[i];
+
                             x++;
                         }
 
