@@ -296,7 +296,7 @@
 
                 _frames++;
 
-                //System.Threading.Thread.Sleep(1);
+                System.Threading.Thread.Sleep(10);
             }
 
             Dispose();
@@ -388,7 +388,8 @@
                         if (j < 0) break;
 
                         if (j < _buffer.Length) {
-                            if ((x + X + 1) > _bufferwidth || (y + Y + 1) > _bufferheight)
+                            if ((x + X + 1) > _bufferwidth || (y + Y + 1) > _bufferheight ||
+                                x + X - 0 < 0 || y + Y - 0 < 0)
                                 break;
 
                             _buffer[j].Attributes = (short)((short)ForegroundColor | (short)((short)BackgroundColor * 0x0010));
@@ -433,6 +434,8 @@
         public void RenderChildren() {
             foreach (ConsoleFrame cf in ChildFrames) {
                 CopyBuffer(cf, this);
+
+                cf.Clear();
             }
         }
 

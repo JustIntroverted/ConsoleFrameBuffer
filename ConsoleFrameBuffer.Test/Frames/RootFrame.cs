@@ -169,16 +169,17 @@ namespace ConsoleFrameBuffer.Test.Frames {
                 // KEY: SHIFT + . = >
                 if (Key == VirtualKeys.OEMPeriod) {
                     if (_caveMap.DownFloorPosition == _player) {
-                        using (ConsoleFrame frame = new ConsoleFrame(0, 10, Width, 3)) {
-                            string msg = "Do you wish to drop down a floor? yes/no\n";
+                        string msg = "Do you wish to drop down a floor? yes/no\n";
+                        using (ConsoleFrame frame = new ConsoleFrame((Width / 2) - (msg.Length / 2), 10, msg.Length, 3)) {
                             frame.SetCursorVisibility(100, true);
-                            frame.Write((Width / 2) - (msg.Length / 2), 1, msg, ConsoleColor.White, ConsoleColor.DarkBlue, true);
+                            frame.Write(0, 1, msg, ConsoleColor.White, ConsoleColor.DarkBlue, true);
                             frame.WriteBuffer();
 
                             VirtualKeys ans = frame.ReadAsVirtualKey();
 
                             if (ans == VirtualKeys.Y) {
-                                frame.Write(0, 0, "Generating cave...", ConsoleColor.White);
+                                frame.Clear();
+                                frame.Write(1, 1, "Generating cave...", ConsoleColor.White);
                                 frame.WriteBuffer();
 
                                 _caveMap.Generate(80, 80);
@@ -196,10 +197,10 @@ namespace ConsoleFrameBuffer.Test.Frames {
                 KeyModifiers == ControlKeyState.RightCtrlPressed) {
                 // KEYS: CTRL + Q
                 if (Key == VirtualKeys.Q) {
-                    using (ConsoleFrame frame = new ConsoleFrame(0, 10, Width, 3)) {
-                        string msg = "Are you sure you want to quit? yes/no\n";
+                    string msg = "Are you sure you want to quit? yes/no\n";
+                    using (ConsoleFrame frame = new ConsoleFrame((Width / 2) - (msg.Length / 2), 10, msg.Length, 3)) {
                         frame.SetCursorVisibility(100, true);
-                        frame.Write((Width / 2) - (msg.Length / 2), 1, msg, ConsoleColor.White, ConsoleColor.DarkBlue, true);
+                        frame.Write(0, 1, msg, ConsoleColor.White, ConsoleColor.DarkBlue, true);
                         frame.WriteBuffer();
 
                         VirtualKeys ans = frame.ReadAsVirtualKey();
