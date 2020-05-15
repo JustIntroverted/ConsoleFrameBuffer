@@ -8,35 +8,36 @@ Allows you to write to the console window at a much faster rate.  If you wanted 
 using System;
 using ConsoleFrameBuffer;
 
-namespace YourProject {
-
-    internal class Program {
-
+namespace YourProject 
+{
+    internal class Program 
+	{
         // width and height for the frame
         private const int WIDTH = 80;
         private const int HEIGHT = 25;
 
         // declare new frame
-        private ConsoleFrame _rootFrame;
+        private ConsoleFrame RootFrame;
 
         // player variables
         private int _playerX, _playerY = 0;
         private string _playerID = "@";
 
-        public Program() {
+        public Program() 
+		{
             // create new frame
-            _rootFrame = new ConsoleFrame(0, 0, WIDTH, HEIGHT);
+            RootFrame = new ConsoleFrame(0, 0, WIDTH, HEIGHT);
 
             // adjust some settings for the frame
-            _rootFrame.SetCursorVisibility(1, false);
+            RootFrame.SetCursorVisibility(1, false);
 
             // create the events for the frame
-            _rootFrame.Update += _rootFrame_Update;
-            _rootFrame.Render += _rootFrame_Render;
-            _rootFrame.Key_Pressed += _rootFrame_Key_Pressed;
+            RootFrame.Update += RootFrame_Update;
+            RootFrame.Render += RootFrame_Render;
+            RootFrame.Key_Pressed += RootFrame_Key_Pressed;
 
             // run the frame's update and render events in a loop
-            _rootFrame.Run();
+            RootFrame.Run();
 
             // clears the console window after running Stop()
             // only really needed if you're running the exe
@@ -45,7 +46,8 @@ namespace YourProject {
             Console.Clear();
         }
 
-        private void _rootFrame_Key_Pressed(VirtualKeys Key, ControlKeyState KeyModifiers) {
+        private void RootFrame_Key_Pressed(VirtualKeys Key, ControlKeyState KeyModifiers) 
+		{
             // moves the "@" around the screen
             if (Key == VirtualKeys.W)
                 _playerY--;
@@ -58,28 +60,31 @@ namespace YourProject {
 
             // ends the program
             if (Key == VirtualKeys.Escape)
-                _rootFrame.Stop();
+                RootFrame.Stop();
         }
 
-        private void _rootFrame_Update() {
+        private void RootFrame_Update() 
+		{
             // maybe some game logic here?
         }
 
-        private void _rootFrame_Render() {
+        private void RootFrame_Render() 
+		{
             // clear the buffer frame
-            _rootFrame.Clear();
+            RootFrame.Clear();
 
             // write the player data to the buffer frame
-            _rootFrame.Write(_playerX, _playerY, _playerID, ConsoleColor.Cyan);
+            RootFrame.Write(_playerX, _playerY, _playerID, ConsoleColor.Cyan);
 
             // finally, draw/write the buffer frame to the console window
-            _rootFrame.WriteBuffer();
+            RootFrame.WriteBuffer();
         }
 
-        private static void Main(string[] args) {
+        private static void Main(string[] args) 
+		{
             Console.Title = "New Console Game Project!";
 
-            Program prog = new Program();
+            new Program();
         }
     }
 }
