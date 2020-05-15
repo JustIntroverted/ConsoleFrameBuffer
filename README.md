@@ -11,7 +11,7 @@ using ConsoleFrameBuffer;
 namespace YourProject 
 {
     internal class Program 
-	{
+    {
         // width and height for the frame
         private const int WIDTH = 80;
         private const int HEIGHT = 25;
@@ -24,7 +24,7 @@ namespace YourProject
         private string _playerID = "@";
 
         public Program() 
-		{
+	{
             // create new frame
             RootFrame = new ConsoleFrame(0, 0, WIDTH, HEIGHT);
 
@@ -47,7 +47,7 @@ namespace YourProject
         }
 
         private void RootFrame_Key_Pressed(VirtualKeys Key, ControlKeyState KeyModifiers) 
-		{
+	{
             // moves the "@" around the screen
             if (Key == VirtualKeys.W)
                 _playerY--;
@@ -64,12 +64,12 @@ namespace YourProject
         }
 
         private void RootFrame_Update() 
-		{
+	{
             // maybe some game logic here?
         }
 
         private void RootFrame_Render() 
-		{
+	{
             // clear the buffer frame
             RootFrame.Clear();
 
@@ -81,7 +81,7 @@ namespace YourProject
         }
 
         private static void Main(string[] args) 
-		{
+	{
             Console.Title = "New Console Game Project!";
 
             new Program();
