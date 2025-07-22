@@ -74,8 +74,17 @@
         // TODO 5: create a check to insure the handles are good to go
         public ConsoleFrame(int X, int Y, int Width, int Height) {
             // grabs the handle for the console window
-            _hConsoleOut = APICall.CreateFile("CONOUT$", 0x40000000 | 0x80000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
-            _hConsoleIn = APICall.CreateFile("CONIN$", 0x80000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+            const uint GENERIC_READ = 0x80000000;
+            const uint GENERIC_WRITE = 0x40000000;
+
+            _hConsoleOut = APICall.CreateFile("CONOUT$", GENERIC_READ | GENERIC_WRITE, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+            _hConsoleIn = APICall.CreateFile("CONIN$", GENERIC_READ, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+
+            if (_hConsoleOut == null || _hConsoleOut.IsInvalid)
+                throw new InvalidOperationException("Failed to open CONOUT$ handle.");
+
+            if (_hConsoleIn == null || _hConsoleIn.IsInvalid)
+                throw new InvalidOperationException("Failed to open CONIN$ handle.");
 
             this.X = X;
             this.Y = Y;
