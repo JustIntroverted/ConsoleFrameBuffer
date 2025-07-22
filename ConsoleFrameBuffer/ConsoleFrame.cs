@@ -61,6 +61,9 @@
         public bool CursorVisible { get { return getCursorVisibility(); } }
         public int CursorX { get; set; }
         public int CursorY { get; set; }
+        public int MouseX { get; private set; }
+        public int MouseY { get; private set; }
+        public VirtualKeys MouseButtonState { get; private set; }
         public int Layer { get; set; } = 0; 
         public int Height { get { return _bufferHeight; } protected set { _bufferHeight = (short)(value < 0 ? 0 : value); } }
         public int Width { get { return _bufferWidth; } protected set { _bufferWidth = (short)(value < 0 ? 0 : value); } }
@@ -118,6 +121,21 @@
                 Right = (short)(this.Width + this.X),
                 Bottom = (short)(this.Height + this.Y)
             };
+
+            EnableMouseInput();
+        }
+
+        private void EnableMouseInput()
+        {
+            const uint ENABLE_MOUSE_INPUT = 0x0010;
+            const uint ENABLE_WINDOW_INPUT = 0x0008;
+            uint mode;
+
+            if (APICall.GetConsoleMode(_hConsoleIn, out mode))
+            {
+                mode |= ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT;
+                APICall.SetConsoleMode(_hConsoleIn, mode);
+            }
         }
 
         protected void getInput() {
@@ -146,38 +164,37 @@
                             break;
 
                         case EventType.MOUSE_EVENT:
-                            if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.MOUSE_MOVED) {
-                                Mouse_Moved?.Invoke(
-                                    eventBuffer[i].MouseEvent.dwMousePosition.X,
-                                    eventBuffer[i].MouseEvent.dwMousePosition.Y);
+                            // Always update mouse state
+                            MouseX = eventBuffer[i].MouseEvent.dwMousePosition.X;
+                            MouseY = eventBuffer[i].MouseEvent.dwMousePosition.Y;
+                            MouseButtonState = eventBuffer[i].MouseEvent.dwButtonState;
+
+                            if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.MOUSE_MOVED)
+                            {
+                                Mouse_Moved?.Invoke(MouseX, MouseY);
                             }
 
-                            if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.MOUSE_WHEELED) {
+                            if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.MOUSE_WHEELED)
+                            {
                                 MouseWheeled dir;
-
-                                if (eventBuffer[i].MouseEvent.dwButtonState > 0)
+                                if (MouseButtonState > 0)
                                     dir = MouseWheeled.Up;
                                 else
                                     dir = MouseWheeled.Down;
-
-                                Mouse_Wheeled?.Invoke(
-                                    dir);
+                                Mouse_Wheeled?.Invoke(dir);
                             }
 
-                            if (eventBuffer[i].MouseEvent.dwButtonState > 0) {
-                                if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.DOUBLE_CLICK) {
-                                    MouseButton_DoubleClicked?.Invoke(
-                                        eventBuffer[i].MouseEvent.dwMousePosition.X,
-                                        eventBuffer[i].MouseEvent.dwMousePosition.Y,
-                                        eventBuffer[i].MouseEvent.dwButtonState);
-                                } else {
-                                    MouseButton_Clicked?.Invoke(
-                                        eventBuffer[i].MouseEvent.dwMousePosition.X,
-                                        eventBuffer[i].MouseEvent.dwMousePosition.Y,
-                                        eventBuffer[i].MouseEvent.dwButtonState);
+                            if (MouseButtonState > 0)
+                            {
+                                if (eventBuffer[i].MouseEvent.dwEventFlags == MouseEventType.DOUBLE_CLICK)
+                                {
+                                    MouseButton_DoubleClicked?.Invoke(MouseX, MouseY, MouseButtonState);
+                                }
+                                else
+                                {
+                                    MouseButton_Clicked?.Invoke(MouseX, MouseY, MouseButtonState);
                                 }
                             }
-
                             break;
                     }
                 }
