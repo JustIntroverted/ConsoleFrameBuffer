@@ -492,5 +492,10 @@
                 _disposed = true;
             }
         }
+
+        ~ConsoleFrame()
+        {
+            Dispose(false);
+        }
     }
 }
