@@ -478,6 +478,23 @@
             }
         }
 
+        public void AddChild(ConsoleFrame child, int layer = 0)
+        {
+            child.Layer = layer;
+            if (!ChildFrames.Contains(child))
+                ChildFrames.Add(child);
+        }
+
+        public void RemoveChild(ConsoleFrame child)
+        {
+            ChildFrames.Remove(child);
+        }
+
+        public void BringChildToFront(ConsoleFrame child)
+        {
+            child.Layer = (ChildFrames.Count > 0 ? ChildFrames.Max(c => c.Layer) : 0) + 1;
+        }
+
         private void updateBufferPos() {
             _rect = new SMALL_RECT() {
                 Left = (short)X,
