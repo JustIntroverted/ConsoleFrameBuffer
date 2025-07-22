@@ -1,11 +1,12 @@
 ﻿namespace ConsoleFrameBuffer {
 
+    using Microsoft.Win32.SafeHandles;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
+    using System.Linq;
     using System.Text;
-    using Microsoft.Win32.SafeHandles;
 
     public enum MouseWheeled {
         Up, Down
@@ -14,8 +15,8 @@
     public class ConsoleFrame : IDisposable {
         #region protected variables
         protected CharInfo[] _buffer;
-        protected short _bufferheight;
-        protected short _bufferwidth;
+        protected short _bufferHeight;
+        protected short _bufferWidth;
         protected Coord _cursorPosition;
         protected bool _disposed = false;
         protected SafeFileHandle _hConsoleIn;
@@ -60,8 +61,9 @@
         public bool CursorVisible { get { return getCursorVisibility(); } }
         public int CursorX { get; set; }
         public int CursorY { get; set; }
-        public int Height { get { return _bufferheight; } protected set { _bufferheight = (short)(value < 0 ? 0 : value); } }
-        public int Width { get { return _bufferwidth; } protected set { _bufferwidth = (short)(value < 0 ? 0 : value); } }
+        public int Layer { get; set; } = 0; 
+        public int Height { get { return _bufferHeight; } protected set { _bufferHeight = (short)(value < 0 ? 0 : value); } }
+        public int Width { get { return _bufferWidth; } protected set { _bufferWidth = (short)(value < 0 ? 0 : value); } }
         public int X { get { return _x; } set { _x = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
         public int Y { get { return _y; } set { _y = (short)(value < 0 ? 0 : value); updateBufferPos(); } }
         public int FPS { get { return (int)_value; } }
@@ -193,7 +195,7 @@
         /// Clears the buffer frame.
         /// </summary>
         public void Clear() {
-            _buffer = new CharInfo[_bufferwidth * _bufferheight];
+            _buffer = new CharInfo[_bufferWidth * _bufferHeight];
         }
 
         /// <summary>
@@ -205,7 +207,7 @@
             this.Width = Width;
             this.Height = Height;
 
-            _buffer = new CharInfo[_bufferwidth * _bufferheight];
+            _buffer = new CharInfo[_bufferWidth * _bufferHeight];
 
             updateBufferPos();
         }
@@ -223,15 +225,15 @@
 
             int x, y = 0;
             for (int i = 0; i < src._buffer.Length; i++) {
-                x = i % src._bufferwidth;
-                y = i / src._bufferwidth;
+                x = i % src._bufferWidth;
+                y = i / src._bufferWidth;
 
-                if (x + src.X + 1 > dest._bufferwidth || y + src.Y + 1 > dest._bufferheight)
+                if (x + src.X + 1 > dest._bufferWidth || y + src.Y + 1 > dest._bufferHeight)
                     continue;
 
-                charinfo = src._buffer[x + src._bufferwidth * y];
+                charinfo = src._buffer[x + src._bufferWidth * y];
 
-                dest._buffer[(x + src.X) + dest._bufferwidth * (y + src.Y)] = charinfo;
+                dest._buffer[(x + src.X) + dest._bufferWidth * (y + src.Y)] = charinfo;
             }
         }
 
@@ -391,39 +393,47 @@
         public void Write(int X, int Y, string Text,
             ConsoleColor ForegroundColor = ConsoleColor.Gray,
             ConsoleColor BackgroundColor = ConsoleColor.Black,
-            bool UpdateCursorPosition = false) {
+            bool UpdateCursorPosition = false)
+        {
             if (_buffer.Length <= 0) return;
-            if (Text.Length > _buffer.Length) Text = Text.Substring(0, _buffer.Length - 1);
 
             int x = 0, y = 0;
-            for (int i = 0; i < Text.Length; ++i) {
-                switch (Text[i]) {
-                    // newline
-                    case '\n': x = 0; y++; break;
+            for (int i = 0; i < Text.Length; ++i)
+            {
+                switch (Text[i])
+                {
+                    case '\n':
+                        x = 0;
+                        y++;
+                        break;
 
-                    // carriage return
-                    case '\r': x = 0; break;
+                    case '\r':
+                        x = 0;
+                        break;
 
-                    // tab
                     case '\t':
-                        x += _tabStop - (x % _tabStop); break;
+                        x += _tabStop - (x % _tabStop);
+                        break;
 
                     default:
-                        int j = (y + Y) * _bufferwidth + (x + X);
-
-                        if (j < 0) break;
-
-                        if (j < _buffer.Length) {
-                            if ((x + X + 1) > _bufferwidth || (y + Y + 1) > _bufferheight ||
-                                x + X - 0 < 0 || y + Y - 0 < 0)
-                                break;
-
-                            _buffer[j].Attributes = (short)((short)ForegroundColor | (short)((short)BackgroundColor * 0x0010));
-                            _buffer[j].Char.AsciiChar = (byte)Text[i];
-
-                            x++;
+                        // If at the end of a line, wrap to the next line
+                        if ((x + X) >= _bufferWidth)
+                        {
+                            x = 0;
+                            y++;
                         }
 
+                        // If at the end of the buffer, stop writing
+                        if ((y + Y) >= _bufferHeight)
+                            return;
+
+                        int j = (y + Y) * _bufferWidth + (x + X);
+                        if (j < 0 || j >= _buffer.Length)
+                            break;
+
+                        _buffer[j].Attributes = (short)((short)ForegroundColor | (short)((short)BackgroundColor * 0x0010));
+                        _buffer[j].Char.AsciiChar = (byte)Text[i];
+                        x++;
                         break;
                 }
             }
@@ -431,6 +441,7 @@
             if (UpdateCursorPosition)
                 SetCursorPosition(x + X, y + Y);
         }
+
 
         /// <summary>
         /// Draws the frame to the console window.  This is only needed if you aren't using Run() to
@@ -443,7 +454,7 @@
             // if the handle is valid, then go ahead and write to the console
             if (_hConsoleOut != null && !_hConsoleOut.IsInvalid) {
                 bool b = APICall.WriteConsoleOutput(_hConsoleOut, _buffer,
-                    new Coord() { X = _bufferwidth, Y = _bufferheight },
+                    new Coord() { X = _bufferWidth, Y = _bufferHeight },
                     new Coord() { X = 0, Y = 0 },
                     ref _rect);
             }
@@ -457,11 +468,13 @@
             return cci.bVisible;
         }
 
+        /// <summary>
+        /// Renders all child frames in the order of their layer property. Highest layer is drawn last.
+        /// </summary>
         public void RenderChildren() {
-            foreach (ConsoleFrame cf in ChildFrames) {
+            foreach (ConsoleFrame cf in ChildFrames.OrderBy(c => c.Layer))
+            {
                 CopyBuffer(cf, this);
-
-                cf.Clear();
             }
         }
 
@@ -469,8 +482,8 @@
             _rect = new SMALL_RECT() {
                 Left = (short)X,
                 Top = (short)Y,
-                Right = (short)(_bufferwidth + X),
-                Bottom = (short)(_bufferheight + Y)
+                Right = (short)(_bufferWidth + X),
+                Bottom = (short)(_bufferHeight + Y)
             };
         }
 
