@@ -75,9 +75,27 @@
             // grabs the handle for the console window
             const uint GENERIC_READ = 0x80000000;
             const uint GENERIC_WRITE = 0x40000000;
+            const uint FILE_SHARE_READ = 0x00000001;
+            const uint FILE_SHARE_WRITE = 0x00000002;
 
-            _hConsoleOut = APICall.CreateFile("CONOUT$", GENERIC_READ | GENERIC_WRITE, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
-            _hConsoleIn = APICall.CreateFile("CONIN$", GENERIC_READ, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+            const int OPEN_EXISTING = 3;
+            const int FILE_ATTRIBUTE_NORMAL = 0x80;
+
+            _hConsoleOut = APICall.CreateFile("CONOUT$",
+                GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_WRITE,
+                IntPtr.Zero,
+                (FileMode)OPEN_EXISTING,
+                FILE_ATTRIBUTE_NORMAL,
+                IntPtr.Zero);
+
+            _hConsoleIn = APICall.CreateFile("CONIN$",
+                GENERIC_READ,
+                FILE_SHARE_READ,
+                IntPtr.Zero,
+                (FileMode)OPEN_EXISTING,
+                FILE_ATTRIBUTE_NORMAL,
+                IntPtr.Zero);
 
             if (_hConsoleOut == null || _hConsoleOut.IsInvalid)
                 throw new InvalidOperationException("Failed to open CONOUT$ handle.");
