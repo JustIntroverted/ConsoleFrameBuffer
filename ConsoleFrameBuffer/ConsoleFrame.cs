@@ -22,7 +22,7 @@
         protected SafeFileHandle _hConsoleOut;
         protected SMALL_RECT _rect;
         protected bool _running = false;
-        protected int _tabStop;
+        protected int _tabStop = 4;
         protected short _x;
         protected short _y;
         #endregion protected variables
@@ -71,7 +71,6 @@
         public ConsoleFrame() : this(0, 0, 80, 25) {
         }
 
-        // TODO 5: create a check to insure the handles are good to go
         public ConsoleFrame(int X, int Y, int Width, int Height) {
             // grabs the handle for the console window
             const uint GENERIC_READ = 0x80000000;
@@ -388,8 +387,8 @@
                     case '\r': x = 0; break;
 
                     // tab
-                    // TODO 6: Implement Tabstop
-                    case '\t': x += 5; break;
+                    case '\t':
+                        x += _tabStop - (x % _tabStop); break;
 
                     default:
                         int j = (y + Y) * _bufferwidth + (x + X);
